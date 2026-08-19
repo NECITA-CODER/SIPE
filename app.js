@@ -75,3 +75,70 @@ function renderProfile(profileId) {
 
 document.getElementById('profile-select').addEventListener('change', event => renderProfile(event.target.value));
 renderProfile('001');
+
+const g1Functions = {
+  efectivos: {
+    number: '01', title: 'Mantenimiento del efectivo de la unidad', purpose: 'Mantener informado al Comandante y al Jefe de la Plana Mayor sobre la situación actual y proyectada del personal.',
+    areas: [
+      ['Efectivos y bajas', 'Efectivo autorizado, asignado, presente, disponible, no disponible; altas, bajas, causas y proyección.'],
+      ['Registros e informes', 'Legajo individual, filiación, novedades, parte diario, cuadros de efectivos e informes periódicos.'],
+      ['Vacantes y cobertura', 'Necesidades presentes y futuras, vacantes previstas, perfiles requeridos y propuestas administrativas de asignación.']
+    ], outputs: ['Parte diario de personal', 'Cuadro comparativo de efectivos', 'Alerta de déficit o baja', 'Previsión de vacantes']
+  },
+  administracion: {
+    number: '02', title: 'Administración y manejo del personal', purpose: 'Controlar el ciclo administrativo del personal militar y civil desde su incorporación hasta su retiro o disponibilidad.',
+    areas: [
+      ['Procedimientos de personal', 'Obtención, clasificación, asignación, ascenso, destino, reclasificación, reasignación, retiro, disponibilidad y rotación.'],
+      ['Legajos y documentación', 'Actualización de filiación, antecedentes, documentación personal, vencimientos y respaldo del historial administrativo.'],
+      ['Personal civil', 'Fuentes, obtención, empleo, administración, documentación y control.']
+    ], outputs: ['Ficha y legajo individual', 'Historial de destinos y ascensos', 'Control de rotación', 'Nómina de personal civil']
+  },
+  disciplina: {
+    number: '03', title: 'Mantenimiento de la disciplina, ley y orden', purpose: 'Consolidar hechos y medidas administrativas que afecten la conducta, la disciplina y el cumplimiento de la normativa.',
+    areas: [
+      ['Disciplina y orden', 'Conducta y partes de la tropa, control de extraviados, instalaciones disciplinarias, fallos de la justicia militar y relaciones con civiles.']
+    ], outputs: ['Registro de partes y novedades', 'Seguimiento de medidas', 'Alertas de reincidencia', 'Informe de disciplina']
+  },
+  moral: {
+    number: '04', title: 'Incremento y mantenimiento de la moral', purpose: 'Administrar los servicios y reconocimientos que sostienen el bienestar, la motivación y la cohesión del personal.',
+    areas: [
+      ['Servicios de personal', 'Permisos, licencias, descanso, recreación, servicio postal, actividades religiosas, servicios especiales, bazares, caja, asesoría legal y bienestar.'],
+      ['Condecoraciones y recompensas', 'Postulaciones, antecedentes, trámite y control por actuaciones sobresalientes.'],
+      ['Entierros y sepulturas', 'Registro administrativo de fallecidos, efectos personales, ceremonias y sepulturas.']
+    ], outputs: ['Rol de vacaciones y permisos', 'Control de bienestar', 'Registro de reconocimientos', 'Registro administrativo de fallecidos']
+  },
+  pc: {
+    number: '05', title: 'Administración interna en tiempo de paz', purpose: 'Organizar el funcionamiento administrativo de la jefatura y sus dependencias, sin registrar información operacional.',
+    areas: [
+      ['Funcionamiento interno', 'Personal asignado, turnos, responsabilidades, distribución funcional y requerimientos administrativos de las oficinas.']
+    ], outputs: ['Nómina funcional', 'Rol de turnos', 'Lista de responsabilidades', 'Novedades administrativas']
+  },
+  diversos: {
+    number: '06', title: 'Asuntos diversos', purpose: 'Controlar los asuntos de personal no asignados específicamente a otra sección del Estado Mayor.',
+    areas: [
+      ['Educación', 'Desarrollo de la educación general y actividades educativas para familiares.'],
+      ['Situación familiar', 'Trámites y antecedentes administrativos relacionados con matrimonios con personal extranjero.'],
+      ['Visitas', 'Registro, coordinación y recepción administrativa de visitantes.'],
+      ['Planeamiento', 'Aspectos de personal en exámenes de situación, planes y órdenes.'],
+      ['Informes', 'Informes periódicos, especiales y asuntos administrativos no asignados.'],
+      ['Coordinación interna', 'Recomendaciones para mejorar la distribución de funciones y la continuidad del trabajo administrativo.'],
+      ['Otros asuntos', 'Bandeja de casos para clasificación, asignación de responsable y seguimiento.']
+    ], outputs: ['Plan de educación', 'Agenda de visitas', 'Anexo de personal', 'Bandeja de asuntos pendientes']
+  }
+};
+
+function renderG1Detail(key) {
+  const item = g1Functions[key];
+  document.querySelectorAll('.g1-card').forEach(card => card.classList.toggle('active', card.dataset.g1 === key));
+  document.getElementById('g1-detail').innerHTML = `
+    <div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div>
+    <div class="g1-detail-grid">
+      <div><h5>Información a administrar</h5><div class="control-list">${item.areas.map(area => `<article><strong>${area[0]}</strong><p>${area[1]}</p><button data-register="${area[0]}">Abrir registro</button></article>`).join('')}</div></div>
+      <div class="output-panel"><h5>Productos para el mando</h5><ul>${item.outputs.map(output => `<li>${output}</li>`).join('')}</ul><button class="primary-button" data-report="${item.title}">Generar reporte demostrativo</button></div>
+    </div>`;
+  document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => notify(`${button.dataset.register}: registro preparado para la siguiente fase.`)));
+  document.querySelectorAll('[data-report]').forEach(button => button.addEventListener('click', () => notify(`${button.dataset.report}: reporte demostrativo solicitado.`)));
+}
+
+document.querySelectorAll('.g1-card').forEach(card => card.addEventListener('click', () => renderG1Detail(card.dataset.g1)));
+renderG1Detail('efectivos');
