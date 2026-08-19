@@ -3,5 +3,5 @@
 // Nunca coloque claves sb_secret_, service_role ni contraseñas en este archivo.
 window.SIMU_SUPABASE_CONFIG = Object.freeze({
   url: 'https://mcelprsrklggoaoxobxq.supabase.co',
-  publishableKey: 'PEGAR_AQUI_LA_CLAVE_SB_PUBLISHABLE'
+  publishableKey: 'sb_publishable_Nrjbf0opK9rW3tbo3FJ4uQ_NztbBZb2'
 });
