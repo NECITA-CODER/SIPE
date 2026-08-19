@@ -96,16 +96,24 @@ const g1Functions = {
   disciplina: {
     number: '03', title: 'Mantenimiento de la disciplina, ley y orden', purpose: 'Consolidar hechos y medidas administrativas que afecten la conducta, la disciplina y el cumplimiento de la normativa.',
     areas: [
-      ['Disciplina y orden', 'Conducta y partes de la tropa, control de extraviados, instalaciones disciplinarias, fallos de la justicia militar y relaciones con civiles.']
-    ], outputs: ['Registro de partes y novedades', 'Seguimiento de medidas', 'Alertas de reincidencia', 'Informe de disciplina']
+      ['Disciplina y orden', 'Conducta y partes de la tropa, control de extraviados, instalaciones disciplinarias, fallos de la justicia militar y relaciones con civiles.'],
+      ['Archivo de memorándums disciplinarios', 'Referencia documental vinculada al legajo. Conserva número, fecha, tipo, destinatario, estado y ubicación del archivo; no genera la sanción.']
+    ], outputs: ['Registro de partes y novedades', 'Seguimiento de medidas', 'Archivo de memorándums', 'Informe de disciplina'],
+    archives: [
+      ['Mem. Sec. I Pers. N.º 43/26', 'Arresto', 'Sgto. 1ro. Marco Salvatierra', 'Archivado en legajo']
+    ]
   },
   moral: {
     number: '04', title: 'Incremento y mantenimiento de la moral', purpose: 'Administrar los servicios y reconocimientos que sostienen el bienestar, la motivación y la cohesión del personal.',
     areas: [
       ['Servicios de personal', 'Permisos, licencias, descanso, recreación, servicio postal, actividades religiosas, servicios especiales, bazares, caja, asesoría legal y bienestar.'],
-      ['Condecoraciones y recompensas', 'Postulaciones, antecedentes, trámite y control por actuaciones sobresalientes.'],
+      ['Condecoraciones, recompensas y felicitaciones', 'Postulaciones, antecedentes, trámite, memorándums de felicitación y control por actuaciones sobresalientes.'],
       ['Entierros y sepulturas', 'Registro administrativo de fallecidos, efectos personales, ceremonias y sepulturas.']
-    ], outputs: ['Rol de vacaciones y permisos', 'Control de bienestar', 'Registro de reconocimientos', 'Registro administrativo de fallecidos']
+    ], outputs: ['Rol de vacaciones y permisos', 'Control de bienestar', 'Archivo de felicitaciones', 'Registro de reconocimientos'],
+    archives: [
+      ['Mem. Sec. I Pers. N.º 23/26', 'Felicitación', 'Cap. Ana Rojas', 'Archivado en legajo'],
+      ['Mem. Sec. I Pers. N.º 24/26', 'Felicitación', 'Sof. 1ro. Luis Flores', 'Archivado en legajo']
+    ]
   },
   pc: {
     number: '05', title: 'Administración interna en tiempo de paz', purpose: 'Organizar el funcionamiento administrativo de la jefatura y sus dependencias, sin registrar información operacional.',
@@ -129,13 +137,22 @@ const g1Functions = {
 
 function renderG1Detail(key) {
   const item = g1Functions[key];
+  const archive = item.archives ? `
+    <section class="document-archive" aria-label="Archivo documental referencial">
+      <div class="archive-heading"><div><p class="eyebrow">ARCHIVO DOCUMENTAL</p><h5>Memorándums vinculados al legajo</h5></div><span>Solo referencia</span></div>
+      <div class="archive-table">
+        <div class="archive-row archive-head"><span>Documento</span><span>Tipo</span><span>Personal</span><span>Estado</span></div>
+        ${item.archives.map(record => `<div class="archive-row">${record.map(value => `<span>${value}</span>`).join('')}</div>`).join('')}
+      </div>
+      <p class="archive-note">Datos ficticios para demostración. El documento digitalizado se conservará en el acceso seguro del legajo individual.</p>
+    </section>` : '';
   document.querySelectorAll('.g1-card').forEach(card => card.classList.toggle('active', card.dataset.g1 === key));
   document.getElementById('g1-detail').innerHTML = `
     <div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div>
     <div class="g1-detail-grid">
       <div><h5>Información a administrar</h5><div class="control-list">${item.areas.map(area => `<article><strong>${area[0]}</strong><p>${area[1]}</p><button data-register="${area[0]}">Abrir registro</button></article>`).join('')}</div></div>
       <div class="output-panel"><h5>Productos para el mando</h5><ul>${item.outputs.map(output => `<li>${output}</li>`).join('')}</ul><button class="primary-button" data-report="${item.title}">Generar reporte demostrativo</button></div>
-    </div>`;
+    </div>${archive}`;
   document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => notify(`${button.dataset.register}: registro preparado para la siguiente fase.`)));
   document.querySelectorAll('[data-report]').forEach(button => button.addEventListener('click', () => notify(`${button.dataset.report}: reporte demostrativo solicitado.`)));
 }
