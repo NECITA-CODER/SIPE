@@ -5,6 +5,11 @@
   const emailInput = document.getElementById('login-email');
   const passwordInput = document.getElementById('login-password');
   const loginButton = document.getElementById('login-button');
+  const forgotButton = document.getElementById('forgot-password-button');
+  const recoveryForm = document.getElementById('recovery-form');
+  const newPasswordInput = document.getElementById('new-password');
+  const confirmPasswordInput = document.getElementById('confirm-password');
+  const recoveryButton = document.getElementById('recovery-button');
   const logoutButton = document.getElementById('logout-button');
   const message = document.getElementById('auth-message');
   const userName = document.getElementById('session-user-name');
@@ -46,6 +51,24 @@
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
   window.simuSupabase = client;
+  let recoveryMode = window.location.hash.includes('type=recovery');
+
+  function showRecoveryForm() {
+    recoveryMode = true;
+    setAuthenticated(false);
+    form.hidden = true;
+    recoveryForm.hidden = false;
+    document.getElementById('auth-title').textContent = 'Crear nueva contraseña';
+    setMessage('El enlace fue validado. Registre una contraseña nueva.', 'success');
+    newPasswordInput.focus();
+  }
+
+  function showLoginForm() {
+    recoveryMode = false;
+    recoveryForm.hidden = true;
+    form.hidden = false;
+    document.getElementById('auth-title').textContent = 'Ingresar al SIMU';
+  }
 
   async function openSession(session) {
     if (!session?.user) {
@@ -100,6 +123,49 @@
     loginButton.disabled = false;
   });
 
+  forgotButton.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    if (!email) {
+      setMessage('Escriba primero su correo electrónico.', 'error');
+      emailInput.focus();
+      return;
+    }
+    forgotButton.disabled = true;
+    setMessage('Solicitando el enlace de recuperación…');
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}${window.location.pathname}`
+    });
+    forgotButton.disabled = false;
+    if (error) {
+      setMessage('No fue posible enviar el correo. Intente nuevamente en unos minutos.', 'error');
+      return;
+    }
+    setMessage('Revise su correo y abra el enlace de recuperación.', 'success');
+  });
+
+  recoveryForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (newPasswordInput.value !== confirmPasswordInput.value) {
+      setMessage('Las contraseñas no coinciden.', 'error');
+      return;
+    }
+    recoveryButton.disabled = true;
+    setMessage('Actualizando contraseña…');
+    const { error } = await client.auth.updateUser({ password: newPasswordInput.value });
+    recoveryButton.disabled = false;
+    if (error) {
+      setMessage('No se pudo actualizar la contraseña. Solicite un nuevo enlace.', 'error');
+      return;
+    }
+    await client.auth.signOut();
+    newPasswordInput.value = '';
+    confirmPasswordInput.value = '';
+    window.history.replaceState({}, document.title, window.location.pathname);
+    showLoginForm();
+    setMessage('Contraseña actualizada. Ya puede iniciar sesión.', 'success');
+    emailInput.focus();
+  });
+
   logoutButton.addEventListener('click', async () => {
     await client.auth.signOut();
     setAuthenticated(false);
@@ -107,9 +173,15 @@
     setMessage('La sesión se cerró correctamente.');
   });
 
-  client.auth.onAuthStateChange((_event, session) => {
-    window.setTimeout(() => openSession(session), 0);
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      window.setTimeout(showRecoveryForm, 0);
+      return;
+    }
+    if (!recoveryMode) window.setTimeout(() => openSession(session), 0);
   });
 
-  client.auth.getSession().then(({ data }) => openSession(data.session));
+  client.auth.getSession().then(({ data }) => {
+    if (!recoveryMode) openSession(data.session);
+  });
 })();
