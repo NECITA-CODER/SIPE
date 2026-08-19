@@ -6,8 +6,28 @@
   <title>SIMU — Sistema Interno de Monitoreo de la Unidad</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <div class="app-shell">
+<body class="auth-required">
+  <section id="auth-gate" class="auth-gate" aria-labelledby="auth-title">
+    <div class="auth-card">
+      <div class="auth-emblem" aria-hidden="true">SM</div>
+      <p class="eyebrow">ACCESO CONTROLADO</p>
+      <h1 id="auth-title">Ingresar al SIMU</h1>
+      <p class="auth-intro">Sistema Interno de Monitoreo de la Unidad</p>
+      <form id="login-form" class="login-form">
+        <label>Correo electrónico
+          <input id="login-email" type="email" autocomplete="username" required />
+        </label>
+        <label>Contraseña
+          <input id="login-password" type="password" autocomplete="current-password" required minlength="6" />
+        </label>
+        <button id="login-button" class="primary-button" type="submit">Iniciar sesión</button>
+      </form>
+      <p id="auth-message" class="auth-message" role="status" aria-live="polite">Ingrese con el usuario autorizado para la prueba piloto.</p>
+      <div class="auth-warning"><strong>Prototipo académico</strong><span>Utilice únicamente información demostrativa.</span></div>
+    </div>
+  </section>
+
+  <div id="app-shell" class="app-shell" aria-hidden="true">
     <aside class="sidebar">
       <div class="brand-mark" aria-hidden="true">SM</div>
       <div class="brand-copy">
@@ -40,7 +60,8 @@
         </div>
         <div class="user-panel">
           <span class="status-dot"></span>
-          <div><strong>Comandante</strong><small>Acceso de consulta</small></div>
+          <div><strong id="session-user-name">Usuario autorizado</strong><small id="session-user-role">Sesión activa</small></div>
+          <button id="logout-button" class="logout-button" type="button">Salir</button>
         </div>
       </header>
 
@@ -261,6 +282,9 @@
   </div>
 
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
