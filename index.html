@@ -21,6 +21,17 @@
           <input id="login-password" type="password" autocomplete="current-password" required minlength="6" />
         </label>
         <button id="login-button" class="primary-button" type="submit">Iniciar sesión</button>
+        <button id="forgot-password-button" class="auth-link-button" type="button">Olvidé mi contraseña</button>
+      </form>
+      <form id="recovery-form" class="login-form recovery-form" hidden>
+        <p class="recovery-instruction">Escriba una contraseña nueva para recuperar el acceso.</p>
+        <label>Nueva contraseña
+          <input id="new-password" type="password" autocomplete="new-password" required minlength="8" />
+        </label>
+        <label>Confirmar contraseña
+          <input id="confirm-password" type="password" autocomplete="new-password" required minlength="8" />
+        </label>
+        <button id="recovery-button" class="primary-button" type="submit">Guardar nueva contraseña</button>
       </form>
       <p id="auth-message" class="auth-message" role="status" aria-live="polite">Ingrese con el usuario autorizado para la prueba piloto.</p>
       <div class="auth-warning"><strong>Prototipo académico</strong><span>Utilice únicamente información demostrativa.</span></div>
