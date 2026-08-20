@@ -350,7 +350,120 @@ cuadrosForm.addEventListener('submit', event => {
   notify('Parte de Cuadros guardado como borrador demostrativo.');
 });
 document.getElementById('cuadros-add-detail').addEventListener('click', () => notify('La incorporación de nuevas filas nominales se habilitará al conectar este registro con Supabase.'));
-document.getElementById('cuadros-print').addEventListener('click', () => window.print());
+const officialCategoryLabels = [
+  ['oo_gg', 'OO. GG.'], ['oo_sup', 'OO. SUP.'], ['oo_sub', 'OO. SUB.'],
+  ['sofs', 'SOFS.'], ['sgtos', 'SGTOS.'], ['sof_bm', 'SOF. BM.'],
+  ['sgtos_bm', 'SGTOS. BM.'], ['oo_serv', 'OO. SERV.'],
+  ['sof_serv', 'SOF. SERV.'], ['sgtos_serv', 'SGTOS. SERV.'],
+  ['profesionales', 'PROFESIONALES'], ['tecnicos', 'TÉCNICOS'],
+  ['administrativo', 'ADMINISTRATIVO'], ['ap_adm', 'AP. ADM.']
+];
+
+const officialNoveltyLabels = [
+  ['baja_medica', 'BAJA MÉDICA'], ['comisiones', 'COMISIONES'],
+  ['puesto_militar_adelantado', 'PUESTO MILITAR ADELANTADO'],
+  ['puesto_seguridad', 'PUESTO DE SEGURIDAD'], ['vacacion', 'VACACIÓN'],
+  ['cuenta_vacacion', 'CUENTA VACACIÓN'], ['falta_lista', 'FALTA A LISTA'],
+  ['sigue_faltando', 'SIGUE FALTANDO']
+];
+
+const officialDemoPersonnel = {
+  baja_medica: ['Sgto. 1ro.', 'Personal demostrativo 01', '01-AGO-26', 'Alta médica', 'Registro ficticio'],
+  comisiones: ['Tte.', 'Personal demostrativo 02', '02-AGO-26', 'Culminar comisión', 'Registro ficticio'],
+  puesto_militar_adelantado: ['Sof. 2do.', 'Personal demostrativo 03', '03-AGO-26', 'Relevo', 'Registro ficticio'],
+  puesto_seguridad: ['Sgto.', 'Personal demostrativo 04', '04-AGO-26', 'Relevo', 'Registro ficticio'],
+  vacacion: ['Sof. 1ro.', 'Personal demostrativo 05', '11-AGO-26', '24-AGO-26', 'Registro ficticio'],
+  cuenta_vacacion: ['Tte.', 'Personal demostrativo 06', '18-AGO-26', '21-AGO-26', 'Registro ficticio'],
+  falta_lista: ['Sgto. 2do.', 'Personal demostrativo 07', '20-AGO-26', '—', 'Registro ficticio'],
+  sigue_faltando: ['Sgto. 1ro.', 'Personal demostrativo 08', '20-AGO-26', '—', 'Registro ficticio']
+};
+
+function escapeOfficial(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  })[character]);
+}
+
+function officialDateParts(value) {
+  const date = value ? new Date(`${value}T12:00:00`) : new Date();
+  const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+  return {
+    long: `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${String(date.getFullYear()).slice(-2)}`,
+    compact: `${String(date.getDate()).padStart(2, '0')}${months[date.getMonth()]}${String(date.getFullYear()).slice(-2)}`
+  };
+}
+
+function officialCategoryCells(categories, total) {
+  return `${officialCategoryLabels.map(([key]) => `<td>${categories[key] || 0}</td>`).join('')}<td>${total}</td>`;
+}
+
+function officialBlankCategoryCells(total) {
+  return `${officialCategoryLabels.map(() => '<td>–</td>').join('')}<td>${total}</td>`;
+}
+
+function officialTableHeader() {
+  return `<tr><th class="official-detail-col">DETALLE</th>${officialCategoryLabels.map(([, label]) => `<th class="official-vertical"><span>${label}</span></th>`).join('')}<th>TOTAL</th></tr>`;
+}
+
+function officialNominalSection(key, label, number, count) {
+  const person = officialDemoPersonnel[key];
+  const rows = count > 0
+    ? `<tr><td>RIAE-18<br>“VICTORIA”</td><td>${person[0]}</td><td>${person[1]}</td><td>${person[2]}</td><td>${person[3]}</td><td>${person[4]}</td></tr>`
+    : '<tr><td colspan="6">SIN NOVEDAD REGISTRADA</td></tr>';
+  return `<section class="official-nominal-section">
+    <h3><b>${number}.-</b> <u>${label}.</u> <small>(${count} REGISTRADOS)</small></h3>
+    <table class="official-nominal-table"><thead><tr><th>UNIDAD</th><th>GRADO</th><th>NOMBRES Y APELLIDOS</th><th>DESDE</th><th>HASTA</th><th>OBS.</th></tr></thead><tbody>${rows}</tbody></table>
+  </section>`;
+}
+
+function buildOfficialReport() {
+  const data = saveCuadrosPart();
+  const totals = calculateCuadrosPart();
+  const date = officialDateParts(data.date);
+  const reference = escapeOfficial(data.reference || 'S. I PERS. N.° 000/26');
+  const situationRows = officialNoveltyLabels.map(([key, label]) => `<tr><td class="official-row-label">${label}</td>${officialBlankCategoryCells(data.novelties[key] || 0)}</tr>`).join('');
+  const pageTwoSections = officialNoveltyLabels.slice(0, 4).map(([key, label], index) => officialNominalSection(key, label, index + 1, data.novelties[key] || 0)).join('');
+  const pageThreeSections = officialNoveltyLabels.slice(4).map(([key, label], index) => officialNominalSection(key, label, index + 5, data.novelties[key] || 0)).join('');
+  const container = document.getElementById('official-report-print');
+  container.innerHTML = `
+    <article class="official-page official-page-one">
+      <header class="official-header"><div><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></div><div class="official-code">DIV7RIA18PERS${date.compact}</div></header>
+      <h1>RADIOGRAMA EXPEDIDO</h1>
+      <p class="official-place">TOLATA, ${date.long}.</p>
+      <div class="official-routing"><b>AL</b><span>:</span><span>CMDO. DIV-7</span><span>COCHABAMBA.</span><b>DEL</b><span>:</span><span>CMDO. DEL RIAEROTRANS-18 “VICTORIA”</span><span>TOLATA.</span></div>
+      <p class="official-reference">${reference}.-</p>
+      <p class="official-intro">EN CUMPLIMIENTO A DISPOSICIONES VIGENTES, ELEVO EL PARTE SEMANAL DEL CUADRO DE EFECTIVOS DEL PERSONAL DE CUADROS Y EMPLEADOS CIVILES, DE ACUERDO AL SIGUIENTE DETALLE:</p>
+      <h2>CUADRO DE EFECTIVOS DEL PERSONAL DE CUADROS DEL<br>RIAEROTRANS-18 “VICTORIA” DE FECHA ${date.long}.</h2>
+      <table class="official-matrix"><thead>${officialTableHeader()}</thead><tbody><tr><td class="official-row-label">EFECTIVO ACTUAL</td>${officialCategoryCells(data.categories, totals.effective)}</tr><tr><td class="official-row-label">TOTAL GENERAL</td>${officialCategoryCells(data.categories, totals.effective)}</tr></tbody></table>
+      <h2>CUADRO DE SITUACIÓN DEL PERSONAL DE CUADROS DEL<br>RIAEROTRANS-18 “VICTORIA”</h2>
+      <table class="official-matrix official-situation"><thead>${officialTableHeader()}</thead><tbody><tr class="official-bold-row"><td class="official-row-label">EFECTIVO ACTUAL</td>${officialCategoryCells(data.categories, totals.effective)}</tr>${situationRows}<tr><td class="official-row-label">NO DISPONIBLES</td>${officialBlankCategoryCells(totals.unavailable)}</tr><tr><td class="official-row-label">DISPONIBLES</td>${officialBlankCategoryCells(totals.available)}</tr><tr class="official-bold-row"><td class="official-row-label">TOTAL</td>${officialCategoryCells(data.categories, totals.effective)}</tr></tbody></table>
+      <p class="official-distribution-note">Nota del prototipo: los totales por novedad se vinculan al parte; la distribución por categoría se completará con el detalle nominal.</p>
+      <footer>1 - 3</footer>
+    </article>
+    <article class="official-page official-page-two">
+      <h2 class="official-demonstration"><u>DEMOSTRACIÓN</u></h2>
+      <p class="official-demo-warning">DATOS FICTICIOS PARA DEMOSTRACIÓN DEL PROTOTIPO</p>
+      ${pageTwoSections}
+      <footer>2 - 3</footer>
+    </article>
+    <article class="official-page official-page-three">
+      ${pageThreeSections}
+      <div class="official-signature"><span>FIRMA DEMOSTRATIVA</span><strong>COMANDANTE DEL RIAEROTRANS-18 “VICTORIA”</strong></div>
+      <p class="official-initials">P-1/JPM/aux.-</p>
+      <p class="official-demo-warning official-bottom-warning">DOCUMENTO DEMOSTRATIVO · NO CONTIENE INFORMACIÓN INSTITUCIONAL REAL</p>
+      <footer>3 - 3</footer>
+    </article>`;
+  return container;
+}
+
+document.getElementById('cuadros-print').addEventListener('click', () => {
+  const totals = renderCuadrosTotals();
+  if (totals.unavailable > totals.effective) return;
+  buildOfficialReport();
+  document.body.classList.add('printing-official-report');
+  window.setTimeout(() => window.print(), 80);
+});
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-report'));
 document.getElementById('cuadros-archive').addEventListener('click', () => {
   const totals = renderCuadrosTotals();
   if (totals.unavailable > totals.effective) return;
