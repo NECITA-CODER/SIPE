@@ -65,3 +65,4 @@
 .content-grid.availability-only{grid-template-columns:1fr}
 .availability-only .availability-list>div{grid-template-columns:190px 1fr 32px}
 @media(max-width:700px){.availability-only .availability-list>div{grid-template-columns:125px 1fr 28px}.availability-only .availability-list>div>span{font-size:10px}}
+.g1-detail-grid.g1-detail-single{grid-template-columns:1fr}
