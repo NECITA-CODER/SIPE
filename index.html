@@ -462,7 +462,7 @@
           <div class="cuadros-form-actions no-print">
             <p id="cuadros-validation">Los cálculos se actualizarán al guardar el parte.</p>
             <div class="cuadros-action-buttons">
-              <button id="cuadros-print" class="secondary-light-button" type="button">Imprimir / Guardar PDF</button>
+              <button id="cuadros-print" class="secondary-light-button" type="button">Generar parte oficial PDF</button>
               <button id="cuadros-archive" class="secondary-light-button" type="button">Cerrar y archivar</button>
               <button class="primary-button" type="submit">Guardar borrador</button>
             </div>
@@ -479,6 +479,8 @@
       </section>
     </main>
   </div>
+
+  <section id="official-report-print" class="official-report" aria-hidden="true"></section>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
