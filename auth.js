@@ -29,6 +29,29 @@
     message.className = `auth-message ${type}`.trim();
   }
 
+  function describeAuthError(error) {
+    const code = String(error?.code || '').toLowerCase();
+    const detail = String(error?.message || '').toLowerCase();
+    const status = Number(error?.status || 0);
+
+    if (code.includes('invalid_credentials') || detail.includes('invalid login credentials')) {
+      return 'Supabase rechazó las credenciales (invalid_credentials). El usuario existe, pero la contraseña registrada no coincide.';
+    }
+    if (code.includes('email_not_confirmed') || detail.includes('email not confirmed')) {
+      return 'El correo del usuario todavía no está confirmado (email_not_confirmed).';
+    }
+    if (status === 429 || code.includes('over_request_rate_limit') || detail.includes('rate limit')) {
+      return 'Supabase bloqueó temporalmente nuevos intentos por exceso de solicitudes. Espere antes de reintentar.';
+    }
+    if (detail.includes('failed to fetch') || detail.includes('network') || detail.includes('load failed')) {
+      return 'El navegador no pudo comunicarse con Supabase. Revise la conexión o el bloqueo del navegador.';
+    }
+    if (detail.includes('api key') || detail.includes('jwt')) {
+      return 'Supabase rechazó la clave pública de conexión. Se debe revisar la configuración del proyecto.';
+    }
+    return `Acceso rechazado por Supabase (${code || status || 'sin código'}).`;
+  }
+
   function setAuthenticated(active) {
     document.body.classList.toggle('authenticated', active);
     gate.setAttribute('aria-hidden', String(active));
@@ -114,7 +137,8 @@
     });
 
     if (error) {
-      setMessage('Correo o contraseña incorrectos.', 'error');
+      console.error('SIMU auth error', { code: error.code, status: error.status, message: error.message });
+      setMessage(describeAuthError(error), 'error');
       loginButton.disabled = false;
       return;
     }
