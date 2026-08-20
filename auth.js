@@ -121,6 +121,7 @@
 
     userName.textContent = profile.nombre_visible || session.user.email;
     userRole.textContent = roleLabels[profile.rol] || profile.rol;
+    document.body.dataset.userRole = profile.rol;
     setAuthenticated(true);
     setMessage('Sesión autorizada.', 'success');
     passwordInput.value = '';
@@ -192,6 +193,7 @@
 
   logoutButton.addEventListener('click', async () => {
     await client.auth.signOut();
+    delete document.body.dataset.userRole;
     setAuthenticated(false);
     emailInput.focus();
     setMessage('La sesión se cerró correctamente.');
