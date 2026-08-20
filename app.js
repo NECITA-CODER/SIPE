@@ -13,7 +13,8 @@ function showView(id) {
     p1: 'P-1 Personal — SIPE',
     portal: 'Portal del Personal',
     vacaciones: 'Reporte individual de vacaciones',
-    informacion: 'Disposiciones generales'
+    informacion: 'Disposiciones generales',
+    cuadros: 'Parte del personal de cuadros'
   };
   title.textContent = pageTitles[id] || pageTitles.inicio;
 }
@@ -183,8 +184,8 @@ const g1Functions = {
   efectivos: {
     number: '01', title: 'Mantenimiento de efectivos', purpose: 'Concentrar y actualizar los partes del personal de la unidad.',
     areas: [
-      ['Parte del personal de cuadros y administrativos', 'Registro y actualización del efectivo, disponibilidad y novedades del personal de cuadros y administrativos.'],
-      ['Parte del personal de soldados', 'Registro y actualización del efectivo, disponibilidad y novedades del personal de soldados.']
+      { id: 'cuadros', title: 'Parte del personal de cuadros', description: 'Registro del efectivo, disponibilidad, novedades y demostración nominal del personal de cuadros.' },
+      { id: 'tropa', title: 'Parte del personal de tropa', description: 'Registro del efectivo, disponibilidad y novedades del personal de tropa.' }
     ]
   },
   administracion: {
@@ -229,10 +230,136 @@ function renderG1Detail(key) {
   document.getElementById('g1-detail').innerHTML = `
     <div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div>
     <div class="g1-detail-grid g1-detail-single">
-      <div><h5>Registros de la función</h5><div class="control-list">${item.areas.map(area => `<article><strong>${area[0]}</strong><p>${area[1]}</p><button data-register="${area[0]}">Abrir registro</button></article>`).join('')}</div></div>
+      <div><h5>Registros de la función</h5><div class="control-list">${item.areas.map(area => {
+        const normalized = Array.isArray(area) ? { id: '', title: area[0], description: area[1] } : area;
+        return `<article><strong>${normalized.title}</strong><p>${normalized.description}</p><button data-register="${normalized.id}" data-register-title="${normalized.title}">Abrir registro</button></article>`;
+      }).join('')}</div></div>
     </div>`;
-  document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => notify(`${button.dataset.register}: registro preparado para la siguiente fase.`)));
+  document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => {
+    if (button.dataset.register === 'cuadros') {
+      showView('cuadros');
+      return;
+    }
+    notify(`${button.dataset.registerTitle}: registro preparado para la siguiente fase.`);
+  }));
 }
 
 document.querySelectorAll('.g1-card').forEach(card => card.addEventListener('click', () => renderG1Detail(card.dataset.g1)));
 renderG1Detail('efectivos');
+
+const cuadrosCategoryInputs = [...document.querySelectorAll('[data-cuadros-category]')];
+const cuadrosNoveltyInputs = [...document.querySelectorAll('[data-cuadros-novelty]')];
+const cuadrosForm = document.getElementById('cuadros-form');
+const cuadrosStorageKey = 'simu_demo_parte_cuadros_v1';
+const cuadrosArchiveStorageKey = 'simu_demo_archivo_cuadros_v1';
+
+function calculateCuadrosPart() {
+  const effective = cuadrosCategoryInputs.reduce((sum, input) => sum + integerValue(input), 0);
+  const unavailable = cuadrosNoveltyInputs.reduce((sum, input) => sum + integerValue(input), 0);
+  const available = Math.max(0, effective - unavailable);
+  const efficiency = effective > 0 ? (available / effective) * 100 : 0;
+  return { effective, unavailable, available, efficiency };
+}
+
+function renderCuadrosTotals() {
+  const part = calculateCuadrosPart();
+  setText('cuadros-effective', part.effective);
+  setText('cuadros-unavailable', part.unavailable);
+  setText('cuadros-available', part.available);
+  setText('cuadros-efficiency', formatEfficiency(part.efficiency));
+  const invalid = part.unavailable > part.effective;
+  const message = document.getElementById('cuadros-validation');
+  message.textContent = invalid ? 'Las novedades no pueden superar el efectivo actual.' : 'Los cálculos se actualizarán al guardar el parte.';
+  message.classList.toggle('error', invalid);
+  cuadrosForm.querySelector('button[type="submit"]').disabled = invalid;
+  return part;
+}
+
+function saveCuadrosPart() {
+  const data = {
+    date: document.getElementById('cuadros-date').value,
+    reference: document.getElementById('cuadros-reference').value,
+    categories: Object.fromEntries(cuadrosCategoryInputs.map(input => [input.dataset.cuadrosCategory, integerValue(input)])),
+    novelties: Object.fromEntries(cuadrosNoveltyInputs.map(input => [input.dataset.cuadrosNovelty, integerValue(input)]))
+  };
+  localStorage.setItem(cuadrosStorageKey, JSON.stringify(data));
+  return data;
+}
+
+function readCuadrosArchive() {
+  try {
+    const archive = JSON.parse(localStorage.getItem(cuadrosArchiveStorageKey) || '[]');
+    return Array.isArray(archive) ? archive : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function renderCuadrosArchive() {
+  const archive = readCuadrosArchive();
+  setText('cuadros-archive-count', `${archive.length} ${archive.length === 1 ? 'registro' : 'registros'}`);
+  const container = document.getElementById('cuadros-archive-list');
+  if (!archive.length) {
+    container.innerHTML = '<p class="cuadros-empty">Todavía no existen partes archivados.</p>';
+    return;
+  }
+  container.innerHTML = archive.map((item, index) => `
+    <article class="cuadros-archive-row">
+      <div><span>Fecha</span><strong>${item.date || 'Sin fecha'}</strong></div>
+      <div><span>Referencia</span><strong>${item.reference || 'Sin referencia'}</strong></div>
+      <div><span>Efectivo</span><strong>${item.totals.effective}</strong></div>
+      <div><span>No disponibles</span><strong>${item.totals.unavailable}</strong></div>
+      <div><span>Estado</span><strong>Archivado</strong></div>
+      <button type="button" data-load-cuadros-archive="${index}">Consultar</button>
+    </article>`).join('');
+  container.querySelectorAll('[data-load-cuadros-archive]').forEach(button => button.addEventListener('click', () => {
+    const item = archive[Number(button.dataset.loadCuadrosArchive)];
+    document.getElementById('cuadros-date').value = item.date || '';
+    document.getElementById('cuadros-reference').value = item.reference || '';
+    cuadrosCategoryInputs.forEach(input => { input.value = item.categories?.[input.dataset.cuadrosCategory] ?? 0; });
+    cuadrosNoveltyInputs.forEach(input => { input.value = item.novelties?.[input.dataset.cuadrosNovelty] ?? 0; });
+    renderCuadrosTotals();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    notify('Parte archivado cargado en modo de consulta.');
+  }));
+}
+
+function loadCuadrosPart() {
+  const saved = localStorage.getItem(cuadrosStorageKey);
+  if (!saved) return renderCuadrosTotals();
+  try {
+    const data = JSON.parse(saved);
+    document.getElementById('cuadros-date').value = data.date || document.getElementById('cuadros-date').value;
+    document.getElementById('cuadros-reference').value = data.reference || '';
+    cuadrosCategoryInputs.forEach(input => { if (Number.isFinite(data.categories?.[input.dataset.cuadrosCategory])) input.value = data.categories[input.dataset.cuadrosCategory]; });
+    cuadrosNoveltyInputs.forEach(input => { if (Number.isFinite(data.novelties?.[input.dataset.cuadrosNovelty])) input.value = data.novelties[input.dataset.cuadrosNovelty]; });
+  } catch (error) {
+    localStorage.removeItem(cuadrosStorageKey);
+  }
+  return renderCuadrosTotals();
+}
+
+document.querySelectorAll('[data-back-p1]').forEach(button => button.addEventListener('click', () => showView('p1')));
+document.getElementById('cuadros-date').value = new Date().toISOString().slice(0, 10);
+cuadrosForm.addEventListener('input', renderCuadrosTotals);
+cuadrosForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const totals = renderCuadrosTotals();
+  if (totals.unavailable > totals.effective) return;
+  saveCuadrosPart();
+  notify('Parte de Cuadros guardado como borrador demostrativo.');
+});
+document.getElementById('cuadros-add-detail').addEventListener('click', () => notify('La incorporación de nuevas filas nominales se habilitará al conectar este registro con Supabase.'));
+document.getElementById('cuadros-print').addEventListener('click', () => window.print());
+document.getElementById('cuadros-archive').addEventListener('click', () => {
+  const totals = renderCuadrosTotals();
+  if (totals.unavailable > totals.effective) return;
+  const part = saveCuadrosPart();
+  const archive = readCuadrosArchive();
+  archive.unshift({ ...part, totals, archivedAt: new Date().toISOString() });
+  localStorage.setItem(cuadrosArchiveStorageKey, JSON.stringify(archive));
+  renderCuadrosArchive();
+  notify('Parte cerrado y archivado en el historial demostrativo.');
+});
+loadCuadrosPart();
+renderCuadrosArchive();
