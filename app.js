@@ -8,7 +8,7 @@ function showView(id) {
   const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : id;
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
-    inicio: 'Situación general de la unidad',
+    inicio: 'Inicio',
     jpm: 'Jefe de la Plana Mayor',
     p1: 'P-1 Personal — SIPE',
     portal: 'Portal del Personal',
@@ -51,7 +51,7 @@ const partDateInput = document.getElementById('part-date');
 const partEffectiveCurrentInput = document.getElementById('part-effective-current');
 const noveltyInputs = [...document.querySelectorAll('[data-novelty]')];
 const partValidationMessage = document.getElementById('part-validation-message');
-const weeklyPartStorageKey = 'simu_demo_weekly_part';
+const weeklyPartStorageKey = 'simu_demo_weekly_part_v2';
 
 function integerValue(input) {
   const value = Number.parseInt(input.value, 10);
@@ -74,10 +74,6 @@ function formatEfficiency(value) {
 
 function renderWeeklyPartPreview() {
   const part = calculateWeeklyPart();
-  setText('part-preview-unavailable', part.unavailable);
-  setText('part-preview-available', Math.max(part.available, 0));
-  setText('part-preview-total', part.total);
-  setText('part-preview-efficiency', formatEfficiency(part.efficiency));
   const invalid = part.available < 0;
   partValidationMessage.textContent = invalid
     ? 'La suma de no disponibles no puede superar el efectivo actual.'
@@ -135,10 +131,10 @@ document.querySelectorAll('[data-open-part]').forEach(button => button.addEventL
 try {
   const storedWeeklyPart = JSON.parse(localStorage.getItem(weeklyPartStorageKey));
   if (storedWeeklyPart) loadWeeklyPart(storedWeeklyPart);
-  else renderWeeklyPartPreview();
+  else updateP1Indicators(renderWeeklyPartPreview());
 } catch {
   localStorage.removeItem(weeklyPartStorageKey);
-  renderWeeklyPartPreview();
+  updateP1Indicators(renderWeeklyPartPreview());
 }
 
 const personnelProfiles = {
