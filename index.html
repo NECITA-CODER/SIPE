@@ -67,7 +67,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">REGIMIENTO DEMOSTRATIVO</p>
-          <h1 id="page-title">Situación general de la unidad</h1>
+          <h1 id="page-title">Inicio</h1>
         </div>
         <div class="user-panel">
           <span class="status-dot"></span>
@@ -77,24 +77,12 @@
       </header>
 
       <section id="inicio" class="view active-view">
-        <section class="personnel-summary" aria-labelledby="personnel-summary-title">
-          <div class="summary-heading">
-            <div>
-              <p class="eyebrow">RESUMEN P-1 · DATOS DEMOSTRATIVOS</p>
-              <h2 id="personnel-summary-title">Situación del personal de la unidad</h2>
-              <p>Vista resumida para apoyar el control de efectivos y la toma de decisiones del mando.</p>
-            </div>
-            <div class="summary-actions">
-              <button class="primary-button" data-open-p1>Ingresar al módulo P-1</button>
-              <button class="secondary-button" data-open-portal>Portal del Personal</button>
-            </div>
-          </div>
-          <div class="summary-metrics" aria-label="Indicadores demostrativos de personal">
-            <article><span>Efectivo total</span><strong>126</strong><small>Personal registrado</small></article>
-            <article><span>Disponible</span><strong class="summary-positive">104</strong><small>82,5 % del efectivo</small></article>
-            <article><span>Permiso o licencia</span><strong>9</strong><small>Novedad vigente</small></article>
-            <article><span>De vacaciones</span><strong>13</strong><small>Según programación</small></article>
-            <article class="summary-alert"><span>Alertas pendientes</span><strong>7</strong><small>Requieren verificación</small></article>
+        <section class="system-identity" aria-labelledby="system-identity-title">
+          <div class="system-identity-mark" aria-hidden="true">SM</div>
+          <div>
+            <p class="eyebrow">PLATAFORMA INTERNA DE LA UNIDAD</p>
+            <h2 id="system-identity-title">SIMU</h2>
+            <p>Sistema Interno de Monitoreo de la Unidad</p>
           </div>
         </section>
 
@@ -109,6 +97,11 @@
             <span>NIVEL DE COORDINACIÓN</span>
             <strong>Jefe de la Plana Mayor</strong>
             <small>Coordina e integra los cinco campos</small>
+          </button>
+          <button class="general-personnel-access" type="button" data-open-portal>
+            <span>ACCESO GENERAL · NO JERÁRQUICO</span>
+            <strong>Portal del Personal</strong>
+            <small>Reporte individual de vacaciones y disposiciones generales</small>
           </button>
           <div class="chain-arrow" aria-hidden="true">↓</div>
           <p class="field-chief-label">JEFES DE LOS CAMPOS DE LA CONDUCCIÓN</p>
@@ -322,21 +315,16 @@
             <fieldset>
               <legend>Novedades que generan no disponibilidad</legend>
               <div class="novelty-grid">
-                <label>Comisión CEO<input data-novelty="comision_ceo" type="number" min="0" step="1" value="4" /></label>
-                <label>Art. 118 LOFA<input data-novelty="art_118" type="number" min="0" step="1" value="1" /></label>
-                <label>Puesto militar de seguridad<input data-novelty="puesto_seguridad" type="number" min="0" step="1" value="1" /></label>
-                <label>Fallecido<input data-novelty="fallecido" type="number" min="0" step="1" value="0" /></label>
-                <label>Comisión o curso<input data-novelty="comision_curso" type="number" min="0" step="1" value="4" /></label>
-                <label>Vacación<input data-novelty="vacacion" type="number" min="0" step="1" value="10" /></label>
-                <label>Cuenta vacación<input data-novelty="cuenta_vacacion" type="number" min="0" step="1" value="2" /></label>
+                <label>Baja médica<input data-novelty="baja_medica" type="number" min="0" step="1" value="3" /></label>
+                <label>Comisiones<input data-novelty="comisiones" type="number" min="0" step="1" value="3" /></label>
+                <label>Puesto militar adelantado<input data-novelty="puesto_militar_adelantado" type="number" min="0" step="1" value="5" /></label>
+                <label>Puesto de seguridad<input data-novelty="puesto_seguridad" type="number" min="0" step="1" value="2" /></label>
+                <label>Vacación<input data-novelty="vacacion" type="number" min="0" step="1" value="23" /></label>
+                <label>Cuenta vacación<input data-novelty="cuenta_vacacion" type="number" min="0" step="1" value="3" /></label>
+                <label>Falta a lista<input data-novelty="falta_lista" type="number" min="0" step="1" value="0" /></label>
+                <label>Sigue faltando<input data-novelty="sigue_faltando" type="number" min="0" step="1" value="0" /></label>
               </div>
             </fieldset>
-            <div class="part-calculation" aria-live="polite">
-              <div><span>No disponible</span><strong id="part-preview-unavailable">22</strong></div>
-              <div><span>Disponible</span><strong id="part-preview-available">104</strong></div>
-              <div><span>Total</span><strong id="part-preview-total">126</strong></div>
-              <div><span>Nivel de eficiencia del personal</span><strong id="part-preview-efficiency">82,5 %</strong></div>
-            </div>
             <div class="part-form-actions">
               <p id="part-validation-message">Los datos son demostrativos y no corresponden a personal institucional.</p>
               <button class="primary-button" type="submit">Guardar y actualizar indicadores</button>
@@ -349,13 +337,14 @@
             <div class="panel-title"><div><p class="eyebrow">DISPONIBILIDAD</p><h3>Situación del personal</h3></div><button class="text-button" data-open-part>Ver detalle</button></div>
             <div class="availability-list">
               <div><span>Disponible</span><div class="bar"><i id="availability-bar" style="width:82.5%"></i></div><strong id="availability-count">104</strong></div>
-              <div><span>Comisión CEO</span><div class="bar"><i id="availability-bar-comision_ceo" style="width:3.2%"></i></div><strong id="availability-count-comision_ceo">4</strong></div>
-              <div><span>Art. 118 LOFA</span><div class="bar"><i id="availability-bar-art_118" style="width:.8%"></i></div><strong id="availability-count-art_118">1</strong></div>
-              <div><span>Puesto militar de seguridad</span><div class="bar"><i id="availability-bar-puesto_seguridad" style="width:.8%"></i></div><strong id="availability-count-puesto_seguridad">1</strong></div>
-              <div><span>Fallecido</span><div class="bar"><i id="availability-bar-fallecido" style="width:0%"></i></div><strong id="availability-count-fallecido">0</strong></div>
-              <div><span>Comisión o curso</span><div class="bar"><i id="availability-bar-comision_curso" style="width:3.2%"></i></div><strong id="availability-count-comision_curso">4</strong></div>
-              <div><span>Vacación</span><div class="bar"><i id="availability-bar-vacacion" style="width:7.9%"></i></div><strong id="availability-count-vacacion">10</strong></div>
-              <div><span>Cuenta vacación</span><div class="bar"><i id="availability-bar-cuenta_vacacion" style="width:1.6%"></i></div><strong id="availability-count-cuenta_vacacion">2</strong></div>
+              <div><span>Baja médica</span><div class="bar"><i id="availability-bar-baja_medica" style="width:2.4%"></i></div><strong id="availability-count-baja_medica">3</strong></div>
+              <div><span>Comisiones</span><div class="bar"><i id="availability-bar-comisiones" style="width:2.4%"></i></div><strong id="availability-count-comisiones">3</strong></div>
+              <div><span>Puesto militar adelantado</span><div class="bar"><i id="availability-bar-puesto_militar_adelantado" style="width:4%"></i></div><strong id="availability-count-puesto_militar_adelantado">5</strong></div>
+              <div><span>Puesto de seguridad</span><div class="bar"><i id="availability-bar-puesto_seguridad" style="width:1.6%"></i></div><strong id="availability-count-puesto_seguridad">2</strong></div>
+              <div><span>Vacación</span><div class="bar"><i id="availability-bar-vacacion" style="width:18.3%"></i></div><strong id="availability-count-vacacion">23</strong></div>
+              <div><span>Cuenta vacación</span><div class="bar"><i id="availability-bar-cuenta_vacacion" style="width:2.4%"></i></div><strong id="availability-count-cuenta_vacacion">3</strong></div>
+              <div><span>Falta a lista</span><div class="bar"><i id="availability-bar-falta_lista" style="width:0%"></i></div><strong id="availability-count-falta_lista">0</strong></div>
+              <div><span>Sigue faltando</span><div class="bar"><i id="availability-bar-sigue_faltando" style="width:0%"></i></div><strong id="availability-count-sigue_faltando">0</strong></div>
             </div>
           </article>
 
