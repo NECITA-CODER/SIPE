@@ -5,12 +5,15 @@ const toast = document.getElementById('toast');
 
 function showView(id) {
   views.forEach(view => view.classList.toggle('active-view', view.id === id));
-  navItems.forEach(item => item.classList.toggle('active', item.dataset.view === id));
+  const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : id;
+  navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
     inicio: 'Situación general de la unidad',
     jpm: 'Jefe de la Plana Mayor',
     p1: 'P-1 Personal — SIPE',
-    portal: 'Portal del Personal'
+    portal: 'Portal del Personal',
+    vacaciones: 'Reporte individual de vacaciones',
+    informacion: 'Disposiciones generales'
   };
   title.textContent = pageTitles[id] || pageTitles.inicio;
 }
@@ -29,10 +32,114 @@ document.querySelectorAll('[data-open-p1]').forEach(item => {
 });
 document.querySelectorAll('[data-open-jpm]').forEach(item => item.addEventListener('click', () => showView('jpm')));
 document.querySelectorAll('[data-open-portal]').forEach(item => item.addEventListener('click', () => showView('portal')));
+document.querySelectorAll('[data-open-vacations]').forEach(item => item.addEventListener('click', () => showView('vacaciones')));
+document.querySelectorAll('[data-open-info]').forEach(item => item.addEventListener('click', () => showView('informacion')));
 document.querySelectorAll('.locked, .chief-card:not(.operative)').forEach(item => item.addEventListener('click', () => notify(`${item.dataset.field}: módulo previsto para desarrollo futuro.`)));
 document.querySelectorAll('[data-demo]').forEach(item => item.addEventListener('click', () => notify('Esta función se habilitará en la siguiente etapa del SIPE.')));
 
+const generalInformationForm = document.getElementById('general-information-form');
+document.getElementById('information-date').value = new Date().toISOString().slice(0, 10);
+generalInformationForm.addEventListener('submit', event => {
+  event.preventDefault();
+  notify('Formulario preparado. La publicación compartida requiere activar Supabase Storage.');
+});
+
 document.getElementById('current-date').textContent = new Intl.DateTimeFormat('es-BO', { day:'2-digit', month:'long', year:'numeric' }).format(new Date());
+
+const weeklyPartForm = document.getElementById('weekly-part-form');
+const partDateInput = document.getElementById('part-date');
+const partEffectiveCurrentInput = document.getElementById('part-effective-current');
+const noveltyInputs = [...document.querySelectorAll('[data-novelty]')];
+const partValidationMessage = document.getElementById('part-validation-message');
+const weeklyPartStorageKey = 'simu_demo_weekly_part';
+
+function integerValue(input) {
+  const value = Number.parseInt(input.value, 10);
+  return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+function calculateWeeklyPart() {
+  const effectiveCurrent = integerValue(partEffectiveCurrentInput);
+  const novelties = Object.fromEntries(noveltyInputs.map(input => [input.dataset.novelty, integerValue(input)]));
+  const unavailable = Object.values(novelties).reduce((total, value) => total + value, 0);
+  const available = effectiveCurrent - unavailable;
+  const total = available >= 0 ? available + unavailable : effectiveCurrent;
+  const efficiency = total > 0 && available >= 0 ? (available / total) * 100 : 0;
+  return { date: partDateInput.value, effectiveCurrent, novelties, unavailable, available, total, efficiency };
+}
+
+function formatEfficiency(value) {
+  return `${new Intl.NumberFormat('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value)} %`;
+}
+
+function renderWeeklyPartPreview() {
+  const part = calculateWeeklyPart();
+  setText('part-preview-unavailable', part.unavailable);
+  setText('part-preview-available', Math.max(part.available, 0));
+  setText('part-preview-total', part.total);
+  setText('part-preview-efficiency', formatEfficiency(part.efficiency));
+  const invalid = part.available < 0;
+  partValidationMessage.textContent = invalid
+    ? 'La suma de no disponibles no puede superar el efectivo actual.'
+    : 'Los datos son demostrativos y no corresponden a personal institucional.';
+  partValidationMessage.classList.toggle('error', invalid);
+  weeklyPartForm.querySelector('button[type="submit"]').disabled = invalid;
+  return part;
+}
+
+function updateP1Indicators(part) {
+  setText('metric-effective-current', part.effectiveCurrent);
+  setText('metric-unavailable', part.unavailable);
+  setText('metric-available', part.available);
+  setText('metric-total', part.total);
+  setText('metric-efficiency', formatEfficiency(part.efficiency));
+  setText('availability-count', part.available);
+  document.getElementById('availability-bar').style.width = `${Math.max(0, Math.min(100, part.efficiency))}%`;
+  Object.entries(part.novelties).forEach(([category, quantity]) => {
+    setText(`availability-count-${category}`, quantity);
+    const categoryBar = document.getElementById(`availability-bar-${category}`);
+    if (categoryBar) {
+      const percentage = part.total > 0 ? (quantity / part.total) * 100 : 0;
+      categoryBar.style.width = `${Math.max(0, Math.min(100, percentage))}%`;
+    }
+  });
+  if (part.date) {
+    const [year, month, day] = part.date.split('-').map(Number);
+    document.getElementById('current-date').textContent = new Intl.DateTimeFormat('es-BO', { day:'2-digit', month:'long', year:'numeric' }).format(new Date(year, month - 1, day));
+  }
+}
+
+function loadWeeklyPart(part) {
+  if (!part || typeof part !== 'object') return;
+  partDateInput.value = part.date || partDateInput.value;
+  partEffectiveCurrentInput.value = Number.isFinite(part.effectiveCurrent) ? part.effectiveCurrent : 126;
+  noveltyInputs.forEach(input => { input.value = Number.isFinite(part.novelties?.[input.dataset.novelty]) ? part.novelties[input.dataset.novelty] : 0; });
+  const calculated = renderWeeklyPartPreview();
+  updateP1Indicators(calculated);
+}
+
+partDateInput.value = new Date().toISOString().slice(0, 10);
+weeklyPartForm.addEventListener('input', renderWeeklyPartPreview);
+weeklyPartForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const part = renderWeeklyPartPreview();
+  if (part.available < 0) return;
+  localStorage.setItem(weeklyPartStorageKey, JSON.stringify(part));
+  updateP1Indicators(part);
+  notify('Parte semanal guardado. Los indicadores P-1 fueron actualizados.');
+});
+document.querySelectorAll('[data-open-part]').forEach(button => button.addEventListener('click', () => {
+  document.getElementById('weekly-part-module').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}));
+
+try {
+  const storedWeeklyPart = JSON.parse(localStorage.getItem(weeklyPartStorageKey));
+  if (storedWeeklyPart) loadWeeklyPart(storedWeeklyPart);
+  else renderWeeklyPartPreview();
+} catch {
+  localStorage.removeItem(weeklyPartStorageKey);
+  renderWeeklyPartPreview();
+}
 
 const personnelProfiles = {
   '001': {
