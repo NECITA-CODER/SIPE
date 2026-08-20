@@ -380,6 +380,102 @@
           <article class="g1-detail" id="g1-detail" aria-live="polite"></article>
         </section>
       </section>
+
+      <section id="cuadros" class="view cuadros-view">
+        <div class="module-heading cuadros-heading">
+          <div>
+            <p class="eyebrow">MANTENIMIENTO DE EFECTIVOS</p>
+            <h2>Parte del personal de cuadros</h2>
+            <p>Registro semanal de efectivos, novedades y detalle nominal.</p>
+          </div>
+          <button class="text-button" type="button" data-back-p1>← Volver a P-1 Personal</button>
+        </div>
+
+        <div class="cuadros-status" aria-label="Resumen del parte de cuadros">
+          <article><span>Efectivo actual</span><strong id="cuadros-effective">76</strong></article>
+          <article><span>No disponibles</span><strong id="cuadros-unavailable" class="warning">17</strong></article>
+          <article><span>Disponibles</span><strong id="cuadros-available" class="positive">59</strong></article>
+          <article class="cuadros-efficiency"><span>Nivel de eficiencia</span><strong id="cuadros-efficiency">77,6 %</strong></article>
+        </div>
+
+        <form id="cuadros-form" class="cuadros-form">
+          <article class="panel cuadros-block">
+            <div class="panel-title"><div><p class="eyebrow">01 · IDENTIFICACIÓN</p><h3>Datos del parte</h3></div><span class="badge green">Borrador</span></div>
+            <div class="cuadros-meta-grid">
+              <label>Fecha del parte<input id="cuadros-date" type="date" required /></label>
+              <label>Unidad<input type="text" value="RIAEROTRANS-18 “VICTORIA”" readonly /></label>
+              <label>Referencia o radiograma<input id="cuadros-reference" type="text" value="S. I PERS. N.° 760/26" /></label>
+            </div>
+          </article>
+
+          <article class="panel cuadros-block">
+            <div class="panel-title"><div><p class="eyebrow">02 · EFECTIVOS</p><h3>Efectivo actual por categoría</h3></div><span class="cuadros-auto-label">Total automático</span></div>
+            <div class="cuadros-category-groups">
+              <fieldset><legend>Oficiales</legend><div class="cuadros-input-grid">
+                <label>OO. GG.<input data-cuadros-category="oo_gg" type="number" min="0" value="0" /></label>
+                <label>OO. SUP.<input data-cuadros-category="oo_sup" type="number" min="0" value="3" /></label>
+                <label>OO. SUB.<input data-cuadros-category="oo_sub" type="number" min="0" value="25" /></label>
+                <label>OO. SERV.<input data-cuadros-category="oo_serv" type="number" min="0" value="3" /></label>
+              </div></fieldset>
+              <fieldset><legend>Suboficiales y sargentos</legend><div class="cuadros-input-grid">
+                <label>SOFS.<input data-cuadros-category="sofs" type="number" min="0" value="12" /></label>
+                <label>SGTOS.<input data-cuadros-category="sgtos" type="number" min="0" value="14" /></label>
+                <label>SOF. BM.<input data-cuadros-category="sof_bm" type="number" min="0" value="5" /></label>
+                <label>SGTOS. BM.<input data-cuadros-category="sgtos_bm" type="number" min="0" value="7" /></label>
+                <label>SOF. SERV.<input data-cuadros-category="sof_serv" type="number" min="0" value="0" /></label>
+                <label>SGTOS. SERV.<input data-cuadros-category="sgtos_serv" type="number" min="0" value="1" /></label>
+              </div></fieldset>
+              <fieldset><legend>Personal civil y administrativo</legend><div class="cuadros-input-grid">
+                <label>Profesionales<input data-cuadros-category="profesionales" type="number" min="0" value="2" /></label>
+                <label>Técnicos<input data-cuadros-category="tecnicos" type="number" min="0" value="2" /></label>
+                <label>Administrativo<input data-cuadros-category="administrativo" type="number" min="0" value="1" /></label>
+                <label>AP. ADM.<input data-cuadros-category="ap_adm" type="number" min="0" value="1" /></label>
+              </div></fieldset>
+            </div>
+          </article>
+
+          <article class="panel cuadros-block">
+            <div class="panel-title"><div><p class="eyebrow">03 · SITUACIÓN</p><h3>Novedades que generan no disponibilidad</h3></div><span class="cuadros-auto-label">Campos modificables</span></div>
+            <div class="cuadros-novelty-grid">
+              <label>Comisión CEO<input data-cuadros-novelty="comision_ceo" type="number" min="0" value="4" /></label>
+              <label>Art. 118 LOFA<input data-cuadros-novelty="art_118" type="number" min="0" value="1" /></label>
+              <label>Puesto militar de seguridad<input data-cuadros-novelty="puesto_seguridad" type="number" min="0" value="1" /></label>
+              <label>Fallecido<input data-cuadros-novelty="fallecido" type="number" min="0" value="1" /></label>
+              <label>Comisión curso<input data-cuadros-novelty="comision_curso" type="number" min="0" value="1" /></label>
+              <label>Vacación<input data-cuadros-novelty="vacacion" type="number" min="0" value="8" /></label>
+              <label>Cuenta vacación<input data-cuadros-novelty="cuenta_vacacion" type="number" min="0" value="1" /></label>
+            </div>
+          </article>
+
+          <article class="panel cuadros-block">
+            <div class="panel-title"><div><p class="eyebrow">04 · DEMOSTRACIÓN</p><h3>Detalle nominal de novedades</h3></div><button id="cuadros-add-detail" class="text-button" type="button">+ Agregar registro</button></div>
+            <div class="cuadros-detail-table" role="table" aria-label="Detalle nominal demostrativo">
+              <div class="cuadros-detail-row cuadros-detail-head" role="row"><span>Novedad</span><span>Grado</span><span>Nombres y apellidos</span><span>Desde</span><span>Hasta</span><span>Observaciones</span></div>
+              <div class="cuadros-detail-row" role="row"><span>Art. 118 LOFA</span><span>Sgto. Incl. Serv.</span><span>Personal demostrativo 01</span><span>01-ABR-26</span><span>—</span><span>—</span></div>
+              <div class="cuadros-detail-row" role="row"><span>Comisión CEO</span><span>Tte. Cab.</span><span>Personal demostrativo 02</span><span>02-MAR-26</span><span>Culminar comisión</span><span>Referencia demostrativa</span></div>
+              <div class="cuadros-detail-row" role="row"><span>Vacación</span><span>Sof. Incl. Int.</span><span>Personal demostrativo 03</span><span>11-AGO-26</span><span>24-AGO-26</span><span>—</span></div>
+            </div>
+            <p class="cuadros-data-note">La demostración utiliza identidades ficticias y no contiene información institucional real.</p>
+          </article>
+
+          <div class="cuadros-form-actions no-print">
+            <p id="cuadros-validation">Los cálculos se actualizarán al guardar el parte.</p>
+            <div class="cuadros-action-buttons">
+              <button id="cuadros-print" class="secondary-light-button" type="button">Imprimir / Guardar PDF</button>
+              <button id="cuadros-archive" class="secondary-light-button" type="button">Cerrar y archivar</button>
+              <button class="primary-button" type="submit">Guardar borrador</button>
+            </div>
+          </div>
+        </form>
+
+        <article class="panel cuadros-archive no-print">
+          <div class="panel-title"><div><p class="eyebrow">HISTORIAL</p><h3>Partes archivados</h3></div><span id="cuadros-archive-count" class="badge">0 registros</span></div>
+          <div id="cuadros-archive-list" class="cuadros-archive-list">
+            <p class="cuadros-empty">Todavía no existen partes archivados.</p>
+          </div>
+          <p class="archive-note">En el prototipo, el historial se conserva en este navegador. La versión institucional lo almacenará en Supabase.</p>
+        </article>
+      </section>
     </main>
   </div>
 
