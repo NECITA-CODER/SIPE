@@ -181,83 +181,57 @@ renderProfile('001');
 
 const g1Functions = {
   efectivos: {
-    number: '01', title: 'Mantenimiento del efectivo de la unidad', purpose: 'Mantener informado al Comandante y al Jefe de la Plana Mayor sobre la situación actual y proyectada del personal.',
+    number: '01', title: 'Mantenimiento de efectivos', purpose: 'Concentrar y actualizar los partes del personal de la unidad.',
     areas: [
-      ['Efectivos y bajas', 'Efectivo autorizado, asignado, presente, disponible, no disponible; altas, bajas, causas y proyección.'],
-      ['Registros e informes', 'Legajo individual, filiación, novedades, parte diario, cuadros de efectivos e informes periódicos.'],
-      ['Vacantes y cobertura', 'Necesidades presentes y futuras, vacantes previstas, perfiles requeridos y propuestas administrativas de asignación.']
-    ], outputs: ['Parte diario de personal', 'Cuadro comparativo de efectivos', 'Alerta de déficit o baja', 'Previsión de vacantes']
+      ['Parte del personal de cuadros y administrativos', 'Registro y actualización del efectivo, disponibilidad y novedades del personal de cuadros y administrativos.'],
+      ['Parte del personal de soldados', 'Registro y actualización del efectivo, disponibilidad y novedades del personal de soldados.']
+    ]
   },
   administracion: {
-    number: '02', title: 'Administración y manejo del personal', purpose: 'Controlar el ciclo administrativo del personal militar y civil desde su incorporación hasta su retiro o disponibilidad.',
+    number: '02', title: 'Administración del personal', purpose: 'Organizar los registros nominales y la documentación individual del personal.',
     areas: [
-      ['Procedimientos de personal', 'Obtención, clasificación, asignación, ascenso, destino, reclasificación, reasignación, retiro, disponibilidad y rotación.'],
-      ['Legajos y documentación', 'Actualización de filiación, antecedentes, documentación personal, vencimientos y respaldo del historial administrativo.'],
-      ['Personal civil', 'Fuentes, obtención, empleo, administración, documentación y control.']
-    ], outputs: ['Ficha y legajo individual', 'Historial de destinos y ascensos', 'Control de rotación', 'Nómina de personal civil']
+      ['Relaciones nominales del personal', 'Nóminas organizadas por categoría, grado, dependencia y situación administrativa.'],
+      ['Filiaciones personales', 'Datos de identificación, antecedentes y documentación individual vinculada al legajo.']
+    ]
   },
   disciplina: {
-    number: '03', title: 'Mantenimiento de la disciplina, ley y orden', purpose: 'Consolidar hechos y medidas administrativas que afecten la conducta, la disciplina y el cumplimiento de la normativa.',
+    number: '03', title: 'Mantenimiento de la disciplina, ley y orden', purpose: 'Conservar el registro documental de las sanciones administrativas del personal.',
     areas: [
-      ['Disciplina y orden', 'Conducta y partes de la tropa, control de extraviados, instalaciones disciplinarias, fallos de la justicia militar y relaciones con civiles.'],
-      ['Archivo de memorándums disciplinarios', 'Referencia documental vinculada al legajo. Conserva número, fecha, tipo, destinatario, estado y ubicación del archivo; no genera la sanción.']
-    ], outputs: ['Registro de partes y novedades', 'Seguimiento de medidas', 'Archivo de memorándums', 'Informe de disciplina'],
-    archives: [
-      ['Mem. Sec. I Pers. N.º 43/26', 'Arresto', 'Sgto. 1ro. Marco Salvatierra', 'Archivado en legajo']
+      ['Memorándums de sanción', 'Archivo referencial de memorándums, con número, fecha, destinatario, motivo, estado y vinculación al legajo.']
     ]
   },
   moral: {
-    number: '04', title: 'Incremento y mantenimiento de la moral', purpose: 'Administrar los servicios y reconocimientos que sostienen el bienestar, la motivación y la cohesión del personal.',
+    number: '04', title: 'Incremento y mantenimiento de la moral', purpose: 'Registrar reconocimientos y controlar al personal considerado en los procesos de ascenso.',
     areas: [
-      ['Servicios de personal', 'Permisos, licencias, descanso, recreación, servicio postal, actividades religiosas, servicios especiales, bazares, caja, asesoría legal y bienestar.'],
-      ['Condecoraciones, recompensas y felicitaciones', 'Postulaciones, antecedentes, trámite, memorándums de felicitación y control por actuaciones sobresalientes.'],
-      ['Entierros y sepulturas', 'Registro administrativo de fallecidos, efectos personales, ceremonias y sepulturas.']
-    ], outputs: ['Rol de vacaciones y permisos', 'Control de bienestar', 'Archivo de felicitaciones', 'Registro de reconocimientos'],
-    archives: [
-      ['Mem. Sec. I Pers. N.º 23/26', 'Felicitación', 'Cap. Ana Rojas', 'Archivado en legajo'],
-      ['Mem. Sec. I Pers. N.º 24/26', 'Felicitación', 'Sof. 1ro. Luis Flores', 'Archivado en legajo']
+      ['Felicitaciones', 'Archivo de memorándums y antecedentes de felicitación vinculados al legajo individual.'],
+      ['Personal convocado a ascensos', 'Relación y seguimiento administrativo del personal convocado a procesos de ascenso.']
     ]
   },
   pc: {
-    number: '05', title: 'Administración interna en tiempo de paz', purpose: 'Organizar el funcionamiento administrativo de la jefatura y sus dependencias, sin registrar información operacional.',
+    number: '05', title: 'Administración interna', purpose: 'Organizar la documentación de planeamiento y los informes elaborados por el P-1.',
     areas: [
-      ['Funcionamiento interno', 'Personal asignado, turnos, responsabilidades, distribución funcional y requerimientos administrativos de las oficinas.']
-    ], outputs: ['Nómina funcional', 'Rol de turnos', 'Lista de responsabilidades', 'Novedades administrativas']
+      ['Planes de personal', 'Registro, consulta y archivo de planes administrativos correspondientes al área de personal.'],
+      ['Informes', 'Registro, consulta y archivo de informes periódicos y especiales de personal.']
+    ]
   },
   diversos: {
-    number: '06', title: 'Asuntos diversos', purpose: 'Controlar los asuntos de personal no asignados específicamente a otra sección del Estado Mayor.',
+    number: '06', title: 'Diversos', purpose: 'Controlar la recepción y expedición de radiogramas relacionados con el área de personal.',
     areas: [
-      ['Educación', 'Desarrollo de la educación general y actividades educativas para familiares.'],
-      ['Situación familiar', 'Trámites y antecedentes administrativos relacionados con matrimonios con personal extranjero.'],
-      ['Visitas', 'Registro, coordinación y recepción administrativa de visitantes.'],
-      ['Planeamiento', 'Aspectos de personal en exámenes de situación, planes y órdenes.'],
-      ['Informes', 'Informes periódicos, especiales y asuntos administrativos no asignados.'],
-      ['Coordinación interna', 'Recomendaciones para mejorar la distribución de funciones y la continuidad del trabajo administrativo.'],
-      ['Otros asuntos', 'Bandeja de casos para clasificación, asignación de responsable y seguimiento.']
-    ], outputs: ['Plan de educación', 'Agenda de visitas', 'Anexo de personal', 'Bandeja de asuntos pendientes']
+      ['Radiogramas recibidos', 'Registro de origen, número, fecha, asunto, prioridad, responsable y estado de atención.'],
+      ['Radiogramas expedidos', 'Registro de destino, número, fecha, asunto, prioridad y constancia de expedición.']
+    ]
   }
 };
 
 function renderG1Detail(key) {
   const item = g1Functions[key];
-  const archive = item.archives ? `
-    <section class="document-archive" aria-label="Archivo documental referencial">
-      <div class="archive-heading"><div><p class="eyebrow">ARCHIVO DOCUMENTAL</p><h5>Memorándums vinculados al legajo</h5></div><span>Solo referencia</span></div>
-      <div class="archive-table">
-        <div class="archive-row archive-head"><span>Documento</span><span>Tipo</span><span>Personal</span><span>Estado</span></div>
-        ${item.archives.map(record => `<div class="archive-row">${record.map(value => `<span>${value}</span>`).join('')}</div>`).join('')}
-      </div>
-      <p class="archive-note">Datos ficticios para demostración. El documento digitalizado se conservará en el acceso seguro del legajo individual.</p>
-    </section>` : '';
   document.querySelectorAll('.g1-card').forEach(card => card.classList.toggle('active', card.dataset.g1 === key));
   document.getElementById('g1-detail').innerHTML = `
     <div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div>
-    <div class="g1-detail-grid">
-      <div><h5>Información a administrar</h5><div class="control-list">${item.areas.map(area => `<article><strong>${area[0]}</strong><p>${area[1]}</p><button data-register="${area[0]}">Abrir registro</button></article>`).join('')}</div></div>
-      <div class="output-panel"><h5>Productos para el mando</h5><ul>${item.outputs.map(output => `<li>${output}</li>`).join('')}</ul><button class="primary-button" data-report="${item.title}">Generar reporte demostrativo</button></div>
-    </div>${archive}`;
+    <div class="g1-detail-grid g1-detail-single">
+      <div><h5>Registros de la función</h5><div class="control-list">${item.areas.map(area => `<article><strong>${area[0]}</strong><p>${area[1]}</p><button data-register="${area[0]}">Abrir registro</button></article>`).join('')}</div></div>
+    </div>`;
   document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => notify(`${button.dataset.register}: registro preparado para la siguiente fase.`)));
-  document.querySelectorAll('[data-report]').forEach(button => button.addEventListener('click', () => notify(`${button.dataset.report}: reporte demostrativo solicitado.`)));
 }
 
 document.querySelectorAll('.g1-card').forEach(card => card.addEventListener('click', () => renderG1Detail(card.dataset.g1)));
