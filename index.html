@@ -47,7 +47,7 @@
       </div>
 
       <nav aria-label="Navegación principal">
-        <button class="nav-item active" data-view="inicio">Resumen del mando</button>
+        <button class="nav-item active" data-view="inicio">Inicio</button>
         <button class="nav-item" data-view="jpm">Jefe de la Plana Mayor</button>
         <button class="nav-item" data-view="p1">P-1 Personal</button>
         <button class="nav-item personnel-access" data-view="portal">Portal del Personal</button>
@@ -77,17 +77,26 @@
       </header>
 
       <section id="inicio" class="view active-view">
-        <div class="lead-card">
-          <div>
-            <p class="eyebrow">VISIÓN INTEGRADA</p>
-            <h2>Información para apoyar la conducción</h2>
-            <p>La plataforma organiza los cinco campos de la conducción. En esta etapa, el módulo P-1 Personal se encuentra habilitado como prototipo funcional.</p>
+        <section class="personnel-summary" aria-labelledby="personnel-summary-title">
+          <div class="summary-heading">
+            <div>
+              <p class="eyebrow">RESUMEN P-1 · DATOS DEMOSTRATIVOS</p>
+              <h2 id="personnel-summary-title">Situación del personal de la unidad</h2>
+              <p>Vista resumida para apoyar el control de efectivos y la toma de decisiones del mando.</p>
+            </div>
+            <div class="summary-actions">
+              <button class="primary-button" data-open-p1>Ingresar al módulo P-1</button>
+              <button class="secondary-button" data-open-portal>Portal del Personal</button>
+            </div>
           </div>
-          <div class="lead-actions">
-            <button class="primary-button" data-open-p1>Ingresar al SIPE</button>
-            <button class="secondary-button" data-open-portal>Acceso del personal</button>
+          <div class="summary-metrics" aria-label="Indicadores demostrativos de personal">
+            <article><span>Efectivo total</span><strong>126</strong><small>Personal registrado</small></article>
+            <article><span>Disponible</span><strong class="summary-positive">104</strong><small>82,5 % del efectivo</small></article>
+            <article><span>Permiso o licencia</span><strong>9</strong><small>Novedad vigente</small></article>
+            <article><span>De vacaciones</span><strong>13</strong><small>Según programación</small></article>
+            <article class="summary-alert"><span>Alertas pendientes</span><strong>7</strong><small>Requieren verificación</small></article>
           </div>
-        </div>
+        </section>
 
         <section class="command-chain" aria-label="Estructura de conducción">
           <div class="command-node commander-node">
@@ -108,12 +117,12 @@
         <div class="field-grid">
           <article class="field-card available" data-open-p1 tabindex="0">
             <div class="field-number">P-1</div>
-            <div><span class="badge green">Operativo</span><h3>Jefe P-1 Personal</h3><p>Disponibilidad, novedades, capacidades y reportes de personal.</p></div>
+            <div><span class="badge green">Operativo</span><h3>Jefe de Personal</h3></div>
           </article>
-          <article class="field-card"><div class="field-number">P-2</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe P-2 Inteligencia</h3><p>Espacio previsto dentro de la arquitectura general.</p></div></article>
-          <article class="field-card"><div class="field-number">P-3</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe P-3 Operaciones</h3><p>Espacio previsto dentro de la arquitectura general.</p></div></article>
-          <article class="field-card"><div class="field-number">P-4</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe P-4 Logística</h3><p>Espacio previsto dentro de la arquitectura general.</p></div></article>
-          <article class="field-card"><div class="field-number">P-5</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe P-5 Asuntos Civiles</h3><p>Espacio previsto dentro de la arquitectura general.</p></div></article>
+          <article class="field-card"><div class="field-number">P-2</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Inteligencia</h3></div></article>
+          <article class="field-card"><div class="field-number">P-3</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Operaciones</h3></div></article>
+          <article class="field-card"><div class="field-number">P-4</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Logística</h3></div></article>
+          <article class="field-card"><div class="field-number">P-5</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Asuntos Civiles</h3></div></article>
         </div>
       </section>
 
@@ -139,10 +148,45 @@
         </div>
       </section>
 
-      <section id="portal" class="view">
+      <section id="portal" class="view personnel-portal-home">
         <div class="module-heading">
-          <div><p class="eyebrow">CONSULTA INDIVIDUAL</p><h2>Portal del Personal</h2><p>Consulta personal del rol, saldo disponible y movimientos de vacaciones.</p></div>
-          <div class="directive-badges"><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
+          <div>
+            <p class="eyebrow">ACCESO DEL PERSONAL</p>
+            <h2>Portal del Personal</h2>
+            <p>Consulte su información individual y las disposiciones difundidas por la unidad.</p>
+          </div>
+          <span class="badge green">Acceso controlado</span>
+        </div>
+
+        <div class="personnel-portal-options" aria-label="Opciones del Portal del Personal">
+          <button class="personnel-portal-card" type="button" data-open-vacations>
+            <span class="portal-option-number">01</span>
+            <div>
+              <p class="eyebrow">CONSULTA PERSONAL</p>
+              <h3>Reporte individual de vacaciones</h3>
+              <p>Consulte su rol, periodos programados, movimientos y saldo disponible.</p>
+            </div>
+            <strong aria-hidden="true">Ingresar →</strong>
+          </button>
+
+          <button class="personnel-portal-card" type="button" data-open-info>
+            <span class="portal-option-number">02</span>
+            <div>
+              <p class="eyebrow">PARA CONOCIMIENTO</p>
+              <h3>Disposiciones generales</h3>
+              <p>Consulte radiogramas, disposiciones y comunicados publicados por el P-1.</p>
+            </div>
+            <strong aria-hidden="true">Ingresar →</strong>
+          </button>
+        </div>
+
+        <p class="portal-access-note">Cada integrante visualizará únicamente la información autorizada para su perfil.</p>
+      </section>
+
+      <section id="vacaciones" class="view">
+        <div class="module-heading">
+          <div><p class="eyebrow">CONSULTA INDIVIDUAL</p><h2>Reporte individual de vacaciones</h2><p>Consulta personal del rol, saldo disponible y movimientos de vacaciones.</p></div>
+          <div class="directive-badges"><button class="text-button" type="button" data-open-portal>Volver al portal</button><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
         </div>
 
         <div class="privacy-banner">
@@ -216,6 +260,41 @@
         </article>
       </section>
 
+      <section id="informacion" class="view">
+        <div class="module-heading">
+          <div><p class="eyebrow">DIFUSIÓN INTERNA</p><h2>Disposiciones generales</h2><p>Radiogramas, disposiciones y comunicados publicados por el P-1 para conocimiento del personal.</p></div>
+          <div class="directive-badges"><button class="text-button" type="button" data-open-portal>Volver al portal</button><span class="badge green">Consulta general</span></div>
+        </div>
+
+        <div class="information-grid">
+          <article class="panel publication-panel">
+            <div class="panel-title"><div><p class="eyebrow">ADMINISTRACIÓN P-1</p><h3>Publicar disposición</h3></div><span class="badge directive">Acceso restringido</span></div>
+            <form id="general-information-form" class="publication-form">
+              <label>Tipo de documento
+                <select id="information-type" required><option value="Radiograma">Radiograma</option><option value="Disposición">Disposición</option><option value="Comunicado">Comunicado</option></select>
+              </label>
+              <label>Asunto<input id="information-subject" type="text" maxlength="120" placeholder="Asunto para conocimiento del personal" required /></label>
+              <label>Referencia<input id="information-reference" type="text" maxlength="80" placeholder="Número o referencia del documento" required /></label>
+              <label>Fecha<input id="information-date" type="date" required /></label>
+              <label class="file-field">Archivo
+                <input id="information-file" type="file" accept=".pdf,.doc,.docx" required />
+                <small>Formatos previstos: PDF, DOC y DOCX.</small>
+              </label>
+              <button class="primary-button" type="submit">Publicar para el personal</button>
+            </form>
+            <p class="storage-note">La publicación compartida se habilitará al conectar este formulario con el almacenamiento seguro de Supabase.</p>
+          </article>
+
+          <article class="panel information-board">
+            <div class="panel-title"><div><p class="eyebrow">PARA CONOCIMIENTO</p><h3>Documentos publicados</h3></div><span class="badge">Datos ficticios</span></div>
+            <div id="information-rows" class="information-list">
+              <article><div><span>Radiograma</span><strong>Disposición administrativa semanal</strong><small>RAD. DEMO. N.º 01/26 · 19-AGO-2026</small></div><button type="button" data-demo>Consultar</button></article>
+              <article><div><span>Comunicado</span><strong>Actividad general de la unidad</strong><small>COM. DEMO. N.º 02/26 · 18-AGO-2026</small></div><button type="button" data-demo>Consultar</button></article>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section id="p1" class="view">
         <div class="module-heading">
           <div><p class="eyebrow">MÓDULO P-1 PERSONAL</p><h2>SIPE</h2><p>Sistema de Información del Personal y Efectivos</p></div>
@@ -223,40 +302,63 @@
         </div>
 
         <div class="metrics">
-          <article><span>Efectivo registrado</span><strong>126</strong><small>100 % de la unidad</small></article>
-          <article><span>Disponible</span><strong class="positive">104</strong><small>82,5 % del efectivo</small></article>
-          <article><span>No disponible</span><strong class="warning">22</strong><small>Con novedad vigente</small></article>
-          <article><span>Alertas</span><strong class="danger">7</strong><small>Requieren verificación</small></article>
-          <article class="compliance-card"><span>Permanencia actual</span><strong class="positive">82,5 %</strong><small>Cumple el mínimo del 75 %</small></article>
+          <article><span>Efectivo actual</span><strong id="metric-effective-current">126</strong><small>Dato demostrativo</small></article>
+          <article><span>No disponible</span><strong id="metric-unavailable" class="warning">22</strong><small>Con novedad vigente</small></article>
+          <article><span>Disponible</span><strong id="metric-available" class="positive">104</strong><small>Situación actual</small></article>
+          <article><span>Total</span><strong id="metric-total">126</strong><small>Según parte de personal</small></article>
+          <article class="compliance-card"><span>Nivel de eficiencia del personal</span><strong id="metric-efficiency" class="positive">82,5 %</strong><small>Cálculo demostrativo</small></article>
         </div>
 
-        <div class="normative-status">
-          <div><span>Norma aplicada</span><strong>Directiva del Ejército N.º 05/26</strong></div>
-          <div><span>Periodo habilitado</span><strong>11-AGO-2026 al 11-DIC-2026</strong></div>
-          <div><span>Estado de control</span><strong class="positive">Programación habilitada</strong></div>
-        </div>
+        <article class="panel weekly-part-module" id="weekly-part-module">
+          <div class="panel-title part-module-heading">
+            <div><p class="eyebrow">ACTUALIZACIÓN DEL PARTE</p><h3>Parte semanal de personal</h3><p>Registro demostrativo para actualizar automáticamente los indicadores del módulo P-1.</p></div>
+            <span class="badge green">Administrador G-1</span>
+          </div>
+          <form id="weekly-part-form" class="weekly-part-form">
+            <div class="part-base-fields">
+              <label>Fecha del parte<input id="part-date" type="date" required /></label>
+              <label>Efectivo actual<input id="part-effective-current" type="number" min="0" step="1" value="126" required /></label>
+            </div>
+            <fieldset>
+              <legend>Novedades que generan no disponibilidad</legend>
+              <div class="novelty-grid">
+                <label>Comisión CEO<input data-novelty="comision_ceo" type="number" min="0" step="1" value="4" /></label>
+                <label>Art. 118 LOFA<input data-novelty="art_118" type="number" min="0" step="1" value="1" /></label>
+                <label>Puesto militar de seguridad<input data-novelty="puesto_seguridad" type="number" min="0" step="1" value="1" /></label>
+                <label>Fallecido<input data-novelty="fallecido" type="number" min="0" step="1" value="0" /></label>
+                <label>Comisión o curso<input data-novelty="comision_curso" type="number" min="0" step="1" value="4" /></label>
+                <label>Vacación<input data-novelty="vacacion" type="number" min="0" step="1" value="10" /></label>
+                <label>Cuenta vacación<input data-novelty="cuenta_vacacion" type="number" min="0" step="1" value="2" /></label>
+              </div>
+            </fieldset>
+            <div class="part-calculation" aria-live="polite">
+              <div><span>No disponible</span><strong id="part-preview-unavailable">22</strong></div>
+              <div><span>Disponible</span><strong id="part-preview-available">104</strong></div>
+              <div><span>Total</span><strong id="part-preview-total">126</strong></div>
+              <div><span>Nivel de eficiencia del personal</span><strong id="part-preview-efficiency">82,5 %</strong></div>
+            </div>
+            <div class="part-form-actions">
+              <p id="part-validation-message">Los datos son demostrativos y no corresponden a personal institucional.</p>
+              <button class="primary-button" type="submit">Guardar y actualizar indicadores</button>
+            </div>
+          </form>
+        </article>
 
-        <div class="content-grid">
+        <div class="content-grid availability-only">
           <article class="panel">
-            <div class="panel-title"><div><p class="eyebrow">DISPONIBILIDAD</p><h3>Situación del personal</h3></div><button class="text-button" data-demo>Ver detalle</button></div>
+            <div class="panel-title"><div><p class="eyebrow">DISPONIBILIDAD</p><h3>Situación del personal</h3></div><button class="text-button" data-open-part>Ver detalle</button></div>
             <div class="availability-list">
-              <div><span>Disponible</span><div class="bar"><i style="width:82.5%"></i></div><strong>104</strong></div>
-              <div><span>Curso</span><div class="bar"><i style="width:5.5%"></i></div><strong>7</strong></div>
-              <div><span>Comisión</span><div class="bar"><i style="width:4%"></i></div><strong>5</strong></div>
-              <div><span>Vacaciones</span><div class="bar"><i style="width:4.8%"></i></div><strong>6</strong></div>
-              <div><span>Otras novedades</span><div class="bar"><i style="width:3.2%"></i></div><strong>4</strong></div>
+              <div><span>Disponible</span><div class="bar"><i id="availability-bar" style="width:82.5%"></i></div><strong id="availability-count">104</strong></div>
+              <div><span>Comisión CEO</span><div class="bar"><i id="availability-bar-comision_ceo" style="width:3.2%"></i></div><strong id="availability-count-comision_ceo">4</strong></div>
+              <div><span>Art. 118 LOFA</span><div class="bar"><i id="availability-bar-art_118" style="width:.8%"></i></div><strong id="availability-count-art_118">1</strong></div>
+              <div><span>Puesto militar de seguridad</span><div class="bar"><i id="availability-bar-puesto_seguridad" style="width:.8%"></i></div><strong id="availability-count-puesto_seguridad">1</strong></div>
+              <div><span>Fallecido</span><div class="bar"><i id="availability-bar-fallecido" style="width:0%"></i></div><strong id="availability-count-fallecido">0</strong></div>
+              <div><span>Comisión o curso</span><div class="bar"><i id="availability-bar-comision_curso" style="width:3.2%"></i></div><strong id="availability-count-comision_curso">4</strong></div>
+              <div><span>Vacación</span><div class="bar"><i id="availability-bar-vacacion" style="width:7.9%"></i></div><strong id="availability-count-vacacion">10</strong></div>
+              <div><span>Cuenta vacación</span><div class="bar"><i id="availability-bar-cuenta_vacacion" style="width:1.6%"></i></div><strong id="availability-count-cuenta_vacacion">2</strong></div>
             </div>
           </article>
 
-          <article class="panel">
-            <div class="panel-title"><div><p class="eyebrow">CONTROL INMEDIATO</p><h3>Herramientas de gestión</h3></div></div>
-            <div class="quick-actions">
-              <button data-demo><strong>Registro maestro</strong><span>Filiación y situación individual</span></button>
-              <button data-demo><strong>Novedades</strong><span>Altas, bajas y ausencias</span></button>
-              <button data-demo><strong>Alertas</strong><span>Plazos y acciones pendientes</span></button>
-              <button data-demo><strong>Reportes</strong><span>Información para el mando</span></button>
-            </div>
-          </article>
         </div>
 
         <section class="g1-functions" aria-labelledby="g1-functions-title">
