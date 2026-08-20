@@ -250,8 +250,8 @@ renderG1Detail('efectivos');
 const cuadrosCategoryInputs = [...document.querySelectorAll('[data-cuadros-category]')];
 const cuadrosNoveltyInputs = [...document.querySelectorAll('[data-cuadros-novelty]')];
 const cuadrosForm = document.getElementById('cuadros-form');
-const cuadrosStorageKey = 'simu_demo_parte_cuadros_v1';
-const cuadrosArchiveStorageKey = 'simu_demo_archivo_cuadros_v1';
+const cuadrosStorageKey = 'simu_demo_parte_cuadros_v2';
+const cuadrosArchiveStorageKey = 'simu_demo_archivo_cuadros_v2';
 
 function calculateCuadrosPart() {
   const effective = cuadrosCategoryInputs.reduce((sum, input) => sum + integerValue(input), 0);
