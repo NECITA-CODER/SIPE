@@ -5,7 +5,7 @@ const toast = document.getElementById('toast');
 
 function showView(id) {
   views.forEach(view => view.classList.toggle('active-view', view.id === id));
-  const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : id;
+  const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : ['cuadros', 'memorandums'].includes(id) ? 'p1' : id;
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
     inicio: 'Inicio',
@@ -14,7 +14,8 @@ function showView(id) {
     portal: 'Portal del Personal',
     vacaciones: 'Reporte individual de vacaciones',
     informacion: 'Disposiciones generales',
-    cuadros: 'Parte del personal de cuadros'
+    cuadros: 'Parte del personal de cuadros',
+    memorandums: 'Memorándums de sanción'
   };
   title.textContent = pageTitles[id] || pageTitles.inicio;
 }
@@ -198,7 +199,7 @@ const g1Functions = {
   disciplina: {
     number: '03', title: 'Mantenimiento de la disciplina, ley y orden', purpose: 'Conservar el registro documental de las sanciones administrativas del personal.',
     areas: [
-      ['Memorándums de sanción', 'Archivo referencial de memorándums, con número, fecha, destinatario, motivo, estado y vinculación al legajo.']
+      { id: 'memorandums', title: 'Memorándums de sanción', description: 'Elaboración, revisión, impresión y archivo de memorándums vinculados al legajo.' }
     ]
   },
   moral: {
@@ -238,6 +239,10 @@ function renderG1Detail(key) {
   document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => {
     if (button.dataset.register === 'cuadros') {
       showView('cuadros');
+      return;
+    }
+    if (button.dataset.register === 'memorandums') {
+      showView('memorandums');
       return;
     }
     notify(`${button.dataset.registerTitle}: registro preparado para la siguiente fase.`);
@@ -476,3 +481,214 @@ document.getElementById('cuadros-archive').addEventListener('click', () => {
 });
 loadCuadrosPart();
 renderCuadrosArchive();
+
+const memorandumPositions = [
+  'SEGUNDO CMTE. DEL GCAE-1','SEGUNDO CMTE. DEL ECAE-B','SUBOFICIAL DE COMANDO','AYUDANTÍA','DIRECTOR DE LA BANDA DE MÚSICA','OFICIAL DE PERSONAL','OFICIAL DE LA SEC. III OPS.','OFICIAL DE LOGÍSTICA','OFICIAL DE INTELIGENCIA','OFICIAL DE AC./OC.','OFICIAL DE RR. PP.','COMANDANTE DE PATRULLA','COMANDANTE DE SECCIÓN','PRIMERO DE SECCIÓN','CMTE. DE ESCUADRÓN','PRIMERO DE ESCUADRÓN','CMTE. DE ESCUADRÓN BASE','CMTE. DE EDRÓN. MANTENIMIENTO','CMTE. DE EDRÓN. OP. AÉREAS','CMTE. DE EDRÓN. ESTANDARIZACIÓN','CMTE. DE EDRÓN. SIMULACIÓN','CMTE. DE EDRÓN. SEG. DE VUELO','AUXILIAR DE LA PLANA MAYOR','AUX. DE LA SEC. PERSONAL','AUX. DE LA SEC. III OPS.','AUX. DE LA SEC. INTELIGENCIA','AUX. DE LA SEC. LOGÍSTICA','AUX. DE LA SEC. AC./OC.','AUX. DE LA SEC. RR. PP.','JEFE DE MANTENIMIENTO','JEFE DE CONTROL DE CALIDAD','JEFE DE LÍNEA DE VUELO','JEFE DE TRANSPORTES','JEFE DE RADIO','AUX. DEL EDRÓN. MANTTO.','AUX. DE LA SEC. RADIO','AUX. DEL JEFE DE TRANSPORTES','CAJERO HABILITADO','AUX. DE LA SEC. CAJA','TÉCNICO DE MANTENIMIENTO','TÉCNICO DEL SIMULADOR DE VUELO','ENCARGADO DE MAT. BÉLICO','MÉDICO OPERATIVO','MÉDICO DENTISTA','OTRO CARGO'
+];
+
+const graveFaultTexts = [
+  'Omitir saludo a los símbolos patrios en formaciones y otros actos de reglamento.',
+  'La falta de cumplimiento estricto a órdenes superiores o su modificación, siempre que no se hubieran representado oportunamente.',
+  'Facilitar armamento o munición sin orden superior.',
+  'Entregar sin orden superior material o instrumentos de naves o vehículos bajo su custodia o responsabilidad.',
+  'La destrucción, deterioro o abandono por negligencia de objetos o prendas pertenecientes a la unidad.',
+  'Vender prendas de su vestuario.',
+  'Abandonar, perder, inutilizar o revelar documentos no clasificados, siempre que no constituya delito.',
+  'Todo acto de agresión y malos tratos a los inferiores, exceptuando los casos para impedir faltas graves o delitos.',
+  'Reprender públicamente y en términos indecorosos a sus subalternos, excediéndose en sus atribuciones.',
+  'Fingir enfermedad para eludir actos del servicio.',
+  'Sobrepasar el tiempo de su licencia sin causa justificada.',
+  'No constituirse en su nuevo destino en el plazo correspondiente o solicitar licencia indefinida para no cumplir el destino señalado.',
+  'Ser causante de desórdenes, escándalos y reyertas públicas o dentro de cuarteles, campamentos y otros.',
+  'Embriagarse y causar escándalos hallándose de franco o vistiendo uniforme.',
+  'Provocar, promover o suscitar discusiones que den lugar a antagonismo entre Fuerzas Armadas de la Nación.',
+  'Realizar público reproche a los actos de gobierno y autoridades militares.',
+  'Provocar o desafiar a un superior, o hacerlo a un inferior en actos del servicio.',
+  'Causar desorden, alarma o confusión en la tropa, campamento, población y otros lugares, cuando no constituya delito.',
+  'Concurrir a casas de tolerancia, cantinas u otros lugares de expendio de bebidas y relacionar a las Fuerzas Armadas con actos escandalosos.',
+  'No conducirse con pulcritud y decoro en todo acto público, dando lugar a críticas contra la institución castrense.',
+  'Estando de civil o de uniforme, cometer actos incorrectos que afecten la dignidad y el honor de la institución armada.',
+  'Ingerir a bordo bebidas alcohólicas o adoptar actitudes reñidas con la moral.',
+  'Ejecutar descuentos, suscripciones o contribuciones arbitrarias en unidades y reparticiones castrenses.',
+  'Autorizar o permitir que los inferiores hostilicen a autoridades políticas, administrativas o personas civiles.',
+  'Obtener préstamos u obsequios de los inferiores, mientras no constituya extorsión.',
+  'Cometer o permitir que se cometan exacciones de poca cuantía.',
+  'Obsequiar artículos de los parques, mientras no constituya delito.',
+  'Contraer deudas habitualmente y por motivos indecorosos.',
+  'Impedir con amenazas la presentación de solicitudes y reclamaciones.',
+  'Prolongar o abreviar los castigos disciplinarios impuestos conforme al reglamento.',
+  'Quebrantar el arresto impuesto o no cumplir la orden para acatarlo.',
+  'Tolerar a los inferiores la más leve falta y no castigarla teniendo competencia ejecutiva.',
+  'Abandonar momentáneamente, en tiempo de paz, el puesto permanente o transitorio confiado.',
+  'Eludir responsabilidades teniendo posibilidad o competencia para asumirlas.',
+  'Permitir la pérdida del principio de autoridad y el respeto de los subalternos a los superiores.',
+  'Entregar o recibir la guardia sin orden superior o nombramiento respectivo.',
+  'No acudir al llamado de sus superiores en caso de alarma.',
+  'No dar parte y no auxiliar a miembros de las Fuerzas Armadas en cualquier accidente dentro o fuera del servicio.',
+  'Difundir falsa alarma en la embarcación estando en navegación.',
+  'Usar condecoraciones extranjeras sin autorización, así como insignias o emblemas no reglamentarios.',
+  'Faltar a la palabra de honor empeñada ante el superior.',
+  'Contraer matrimonio sin la correspondiente autorización superior.',
+  'Negarse sin causa justificada a desempeñar cargos para los que hubiese sido designado.',
+  'Pertenecer o formar logias secretas o clandestinas en el seno de las Fuerzas Armadas de la Nación.',
+  'No cumplir por negligencia una captura a la que está obligado.',
+  'Desconocer la autoridad de los superiores y faltar al respeto debido dentro o fuera del servicio.',
+  'Permitir ofensas, insultos o mala propaganda contra las Fuerzas Armadas sin reaccionar.',
+  'Lesionar la moral no conservando la dignidad y el decoro personales dentro y fuera del servicio.',
+  'Criticar ridiculizando a los superiores en actos del servicio o fuera de él y en presencia de subalternos.',
+  'Hacer circular anónimos, pasquines u otras publicaciones lesivas a la dignidad de las Fuerzas Armadas o sus miembros.',
+  'Usar palabras o ademanes indebidos con los superiores.',
+  'Descuidar la instrucción de sus subalternos o el mantenimiento y conservación del material, instrumental y municiones.',
+  'Desatender el cuidado y alimentación del ganado.',
+  'Visitar otra unidad y no presentarse al comandante para explicar el motivo de la visita.',
+  'Fraccionar fojas de concepto injustas o apasionadas, faltando a la ética profesional.',
+  'Permitir el ingreso a bordo de una nave en puerto a personas o materiales sin autorización.',
+  'Realizar sin orden ni motivo justificado viajes, maniobras o acrobacias peligrosas con máquinas, vehículos o armas.',
+  'Conducir una nave o vehículo en forma riesgosa o en estado de ebriedad.',
+  'Permitir la salida arbitraria de arrestados o del personal que debe permanecer en el recinto militar.'
+];
+
+const lightFaultTexts = [
+  'El desaseo personal.','No llevar el corte reglamentario del cabello, barba y patillas.','Negligencia en la conservación y uso del vestuario, cuarteles y lugares de alojamiento.','Incumplimiento de los deberes impuestos por el régimen interno de cuarteles, guarniciones, acantonamientos y campamentos.','No cumplir las normas relativas a la verificación, mantenimiento y uso de material, máquinas e instrumentos.','No observar las normas del ceremonial marítimo con otra embarcación.','Omisión o incorrección en el saludo reglamentario.','No acudir de inmediato al llamado de sus superiores dentro o fuera del servicio.','Usar prendas de uniforme contrarias al reglamento.','Responder incorrectamente al superior.','No prestar ayuda a personal civil o militar cuando sea requerido.','No dar respuesta oportuna a la correspondencia oficial de rutina encomendada.','Presentarse al superior en forma incorrecta, dirigirse sin la venia correspondiente u omitir el conducto regular.','Presentar solicitudes sin la venia correspondiente u omitiendo el conducto regular.','Formular reclamaciones unificadas al superior.','Retener o no dar curso a las solicitudes formuladas por los inferiores.','Presentarse en actos del servicio en traje de civil, salvo imposibilidad comprobada.','Mantener relaciones de familiaridad con los subalternos en actos del servicio.','Faltar o atrasarse sin permiso, mientras no constituya falta grave o delito.','Abrir la puerta de un local, nave u otro ambiente cuyo ingreso no está autorizado.','No pedir autorización para retirarse de la embarcación o del puesto de trabajo.','Hacer bromas que ocasionen perjuicio moral o material.'
+];
+
+const specialFaults = [
+  { article: '12', numeral: '1', classification: 'Agravación', text: 'La falta leve se convierte en grave cuando es repetida.' },
+  { article: '12', numeral: '2', classification: 'Agravación', text: 'La falta leve se convierte en grave cuando se comete en presencia de subalternos.' },
+  { article: '12', numeral: '3', classification: 'Agravación', text: 'La falta leve se convierte en grave cuando se comete colectivamente.' },
+  { article: '15', numeral: '', classification: 'Falta grave', text: 'Deserción por abandono absoluto del servicio durante cinco días continuos en tiempo de paz.' },
+  { article: '16', numeral: '', classification: 'Falta grave', text: 'No retornar a la unidad luego de cinco días de concluida la licencia o misión.' },
+  { article: '42', numeral: '', classification: 'Falta', text: 'No imponer castigo a faltas cometidas conforme al reglamento.' },
+  { article: '43', numeral: '', classification: 'Falta del superior', text: 'Imponer castigos leves por faltas graves, o castigos graves por faltas leves.' },
+  { article: '49', numeral: '', classification: 'Nueva falta', text: 'Plantear una reclamación maliciosamente o con argumentos falsos.' },
+  { article: '50', numeral: '', classification: 'Falta', text: 'Formular una reclamación sin respetar el conducto regular establecido.' },
+  { article: '51', numeral: '', classification: 'Falta grave', text: 'Ejercer presión sobre el subalterno para que retire su reclamación.' }
+];
+
+const memorandumFaultCatalog = {
+  grave: graveFaultTexts.map((text, index) => ({ article: '10', numeral: String(index + 1), classification: 'Falta grave', text })),
+  leve: lightFaultTexts.map((text, index) => ({ article: '11', numeral: String(index + 1), classification: 'Falta leve', text })),
+  especial: specialFaults
+};
+
+const memorandumForm = document.getElementById('memorandum-form');
+const memoPosition = document.getElementById('memo-position');
+const memoFaultClass = document.getElementById('memo-fault-class');
+const memoFaultSelect = document.getElementById('memo-fault-select');
+const memorandumStorageKey = 'simu_demo_memorandum_v1';
+const memorandumArchiveKey = 'simu_demo_memorandum_archivo_v1';
+let selectedMemorandumFaults = [];
+
+memoPosition.innerHTML = memorandumPositions.map(position => `<option>${position}</option>`).join('');
+memoPosition.value = 'COMANDANTE DE SECCIÓN';
+memoPosition.addEventListener('change', () => {
+  document.getElementById('memo-other-position-wrap').hidden = memoPosition.value !== 'OTRO CARGO';
+});
+
+function renderMemorandumFaultOptions() {
+  memoFaultSelect.innerHTML = memorandumFaultCatalog[memoFaultClass.value].map((fault, index) => `<option value="${index}">Art. ${fault.article}${fault.numeral ? `, numeral ${fault.numeral}` : ''} — ${escapeOfficial(fault.text)}</option>`).join('');
+}
+
+function memorandumLegalText() {
+  if (!selectedMemorandumFaults.length) return '';
+  return selectedMemorandumFaults.map(fault => `Reglamento de Faltas Disciplinarias y sus Castigos N.º 23, ${fault.article === '10' || fault.article === '11' ? 'Capítulo I “LAS FALTAS”, ' : ''}Art. ${fault.article}${fault.numeral ? `, numeral ${fault.numeral}` : ''}, que establece como ${fault.classification.toLowerCase()}: “${fault.text}”`).join('; asimismo, ');
+}
+
+function renderSelectedMemorandumFaults() {
+  const container = document.getElementById('memo-selected-faults');
+  container.innerHTML = selectedMemorandumFaults.length ? selectedMemorandumFaults.map((fault, index) => `<article><div><strong>Art. ${fault.article}${fault.numeral ? ` · numeral ${fault.numeral}` : ''}</strong><span>${escapeOfficial(fault.text)}</span></div><button type="button" data-remove-memo-fault="${index}" aria-label="Quitar falta">×</button></article>`).join('') : '<p>No se seleccionaron faltas.</p>';
+  document.getElementById('memo-legal-basis').value = memorandumLegalText();
+  document.getElementById('memorandum-validation').textContent = selectedMemorandumFaults.length ? `${selectedMemorandumFaults.length} ${selectedMemorandumFaults.length === 1 ? 'falta seleccionada' : 'faltas seleccionadas'}. Revise el fundamento antes de emitir.` : 'Seleccione al menos una falta disciplinaria.';
+  container.querySelectorAll('[data-remove-memo-fault]').forEach(button => button.addEventListener('click', () => {
+    selectedMemorandumFaults.splice(Number(button.dataset.removeMemoFault), 1);
+    renderSelectedMemorandumFaults();
+  }));
+}
+
+memoFaultClass.addEventListener('change', renderMemorandumFaultOptions);
+document.getElementById('memo-add-fault').addEventListener('click', () => {
+  const fault = memorandumFaultCatalog[memoFaultClass.value][Number(memoFaultSelect.value)];
+  if (!fault) return;
+  if (!selectedMemorandumFaults.some(item => item.article === fault.article && item.numeral === fault.numeral)) selectedMemorandumFaults.push({ ...fault });
+  renderSelectedMemorandumFaults();
+});
+
+function memorandumPositionValue() {
+  return memoPosition.value === 'OTRO CARGO' ? document.getElementById('memo-other-position').value.trim() : memoPosition.value;
+}
+
+function collectMemorandumData() {
+  return {
+    section: document.getElementById('memo-section').value.trim(), number: document.getElementById('memo-number').value,
+    year: document.getElementById('memo-year').value, date: document.getElementById('memo-date').value, place: document.getElementById('memo-place').value.trim(),
+    rank: document.getElementById('memo-rank').value.trim(), name: document.getElementById('memo-name').value.trim(), position: memorandumPositionValue(), treatment: document.getElementById('memo-treatment').value.trim(),
+    facts: document.getElementById('memo-facts').value.trim(), faults: selectedMemorandumFaults.map(fault => ({ ...fault })), legalBasis: memorandumLegalText(),
+    sanctionType: document.getElementById('memo-sanction-type').value, sanctionDuration: document.getElementById('memo-sanction-duration').value.trim(), sanctionPlace: document.getElementById('memo-sanction-place').value.trim(),
+    sanctionStart: document.getElementById('memo-sanction-start').value, sanctionEnd: document.getElementById('memo-sanction-end').value, withoutPrejudice: document.getElementById('memo-without-prejudice').checked,
+    signerName: document.getElementById('memo-signer-name').value.trim(), signerRank: document.getElementById('memo-signer-rank').value.trim(), initials: document.getElementById('memo-initials').value.trim()
+  };
+}
+
+function saveMemorandumDraft() {
+  const data = collectMemorandumData();
+  localStorage.setItem(memorandumStorageKey, JSON.stringify(data));
+  return data;
+}
+
+function applyMemorandumData(data) {
+  const fields = { 'memo-section': data.section, 'memo-number': data.number, 'memo-year': data.year, 'memo-date': data.date, 'memo-place': data.place, 'memo-rank': data.rank, 'memo-name': data.name, 'memo-treatment': data.treatment, 'memo-facts': data.facts, 'memo-sanction-type': data.sanctionType, 'memo-sanction-duration': data.sanctionDuration, 'memo-sanction-place': data.sanctionPlace, 'memo-sanction-start': data.sanctionStart, 'memo-sanction-end': data.sanctionEnd, 'memo-signer-name': data.signerName, 'memo-signer-rank': data.signerRank, 'memo-initials': data.initials };
+  Object.entries(fields).forEach(([id, value]) => { if (value !== undefined && value !== null) document.getElementById(id).value = value; });
+  if (memorandumPositions.includes(data.position)) memoPosition.value = data.position;
+  else { memoPosition.value = 'OTRO CARGO'; document.getElementById('memo-other-position').value = data.position || ''; document.getElementById('memo-other-position-wrap').hidden = false; }
+  document.getElementById('memo-without-prejudice').checked = data.withoutPrejudice !== false;
+  selectedMemorandumFaults = Array.isArray(data.faults) ? data.faults.map(fault => ({ ...fault })) : [];
+  renderSelectedMemorandumFaults();
+}
+
+function readMemorandumArchive() {
+  try { const data = JSON.parse(localStorage.getItem(memorandumArchiveKey) || '[]'); return Array.isArray(data) ? data : []; } catch { return []; }
+}
+
+function renderMemorandumArchive() {
+  const archive = readMemorandumArchive();
+  setText('memorandum-archive-count', `${archive.length} ${archive.length === 1 ? 'registro' : 'registros'}`);
+  const container = document.getElementById('memorandum-archive-list');
+  container.innerHTML = archive.length ? archive.map((item, index) => `<article class="memorandum-history-row"><div><span>Memorándum</span><strong>${escapeOfficial(item.section)} N.º ${escapeOfficial(item.number)}/${escapeOfficial(item.year)}</strong></div><div><span>Fecha</span><strong>${escapeOfficial(item.date || 'Sin fecha')}</strong></div><div><span>Destinatario</span><strong>${escapeOfficial(item.rank)} ${escapeOfficial(item.name)}</strong></div><div><span>Estado</span><strong>Archivado</strong></div><button type="button" data-load-memorandum="${index}">Consultar</button></article>`).join('') : '<p class="memorandum-empty">Todavía no existen memorándums archivados.</p>';
+  container.querySelectorAll('[data-load-memorandum]').forEach(button => button.addEventListener('click', () => { applyMemorandumData(archive[Number(button.dataset.loadMemorandum)]); window.scrollTo({ top: 0, behavior: 'smooth' }); notify('Memorándum archivado cargado en modo de consulta.'); }));
+}
+
+function memorandumLongDate(value) {
+  const date = value ? new Date(`${value}T12:00:00`) : new Date();
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `${months[date.getMonth()]} ${date.getDate()} de ${date.getFullYear()}`;
+}
+
+function buildOfficialMemorandum() {
+  const data = saveMemorandumDraft();
+  const sanctionClause = `al recibo del presente es usted sancionado con ${data.sanctionDuration.toUpperCase()} DE ${data.sanctionType.toUpperCase()}, a cumplir en ${data.sanctionPlace}${data.withoutPrejudice ? ', sin perjuicio de cumplir con sus obligaciones' : ''}`;
+  const container = document.getElementById('official-memorandum-print');
+  container.innerHTML = `<article class="memo-official-page">
+    <header><div><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></div><h1>MEMORANDUM</h1></header>
+    <section class="memo-official-routing"><div class="memo-official-date"><span>${escapeOfficial(data.place)}, ${memorandumLongDate(data.date)}</span><u>Presente.-</u></div><div class="memo-official-recipient"><b>${escapeOfficial(data.section)} N.º ${escapeOfficial(data.number)}/${escapeOfficial(data.year)}</b><span>Al Señor: ${escapeOfficial(data.rank)}</span><span>${escapeOfficial(data.name)}</span><strong>${escapeOfficial(data.position)}</strong></div></section>
+    <p>${escapeOfficial(data.treatment)}:</p>
+    <p class="memo-official-body">${escapeOfficial(data.facts)} ${escapeOfficial(data.legalBasis)}, ${escapeOfficial(sanctionClause)}, insto a Usted a encaminar su conducta dentro de los principios de disciplina, responsabilidad y honestidad, en estricto cumplimiento a las disposiciones y normas militares.</p>
+    <p>Ante algún presunto agravio deberá realizar la presentación de reclamación en forma escrita mediante solicitud, conforme a Formato-040 del CJ-RGA-223.</p>
+    <p class="memo-official-copy">Copia del presente será remitida al Dpto. I ADM. RR. HH., para ser insertada a su legajo.</p>
+    <blockquote>“EL MAR NOS PERTENECE POR DERECHO,<br>RECUPERARLO ES UN DEBER”</blockquote>
+    <div class="memo-official-signature"><strong>${escapeOfficial(data.signerName)}</strong><b>${escapeOfficial(data.signerRank)}</b></div>
+    <p class="memo-official-initials">${escapeOfficial(data.initials)}</p>
+  </article>`;
+  return container;
+}
+
+memorandumForm.addEventListener('submit', event => { event.preventDefault(); if (!selectedMemorandumFaults.length) return notify('Seleccione al menos una falta disciplinaria.'); saveMemorandumDraft(); notify('Memorándum guardado como borrador demostrativo.'); });
+document.getElementById('memorandum-preview').addEventListener('click', () => { if (!selectedMemorandumFaults.length) return notify('Seleccione al menos una falta disciplinaria.'); buildOfficialMemorandum(); document.body.classList.add('printing-official-memorandum'); window.setTimeout(() => window.print(), 80); });
+document.getElementById('memorandum-print').addEventListener('click', () => { if (!selectedMemorandumFaults.length) return notify('Seleccione al menos una falta disciplinaria.'); buildOfficialMemorandum(); document.body.classList.add('printing-official-memorandum'); window.setTimeout(() => window.print(), 80); });
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-memorandum'));
+document.getElementById('memorandum-archive').addEventListener('click', () => { if (!selectedMemorandumFaults.length) return notify('Seleccione al menos una falta disciplinaria.'); const data = saveMemorandumDraft(); const archive = readMemorandumArchive(); archive.unshift({ ...data, archivedAt: new Date().toISOString() }); localStorage.setItem(memorandumArchiveKey, JSON.stringify(archive)); setText('memorandum-status', 'Archivado'); renderMemorandumArchive(); notify('Memorándum cerrado y archivado en el historial demostrativo.'); });
+
+document.getElementById('memo-date').value = new Date().toISOString().slice(0, 10);
+renderMemorandumFaultOptions();
+renderSelectedMemorandumFaults();
+try { const savedMemo = JSON.parse(localStorage.getItem(memorandumStorageKey) || 'null'); if (savedMemo) applyMemorandumData(savedMemo); } catch { localStorage.removeItem(memorandumStorageKey); }
+renderMemorandumArchive();

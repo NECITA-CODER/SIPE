@@ -477,10 +477,101 @@
           <p class="archive-note">En el prototipo, el historial se conserva en este navegador. La versión institucional lo almacenará en Supabase.</p>
         </article>
       </section>
+
+      <section id="memorandums" class="view memorandum-view">
+        <div class="module-heading memorandum-heading">
+          <div>
+            <p class="eyebrow">MANTENIMIENTO DE LA DISCIPLINA, LEY Y ORDEN</p>
+            <h2>Memorándums de sanción</h2>
+            <p>Elaboración guiada, revisión, impresión y archivo demostrativo.</p>
+          </div>
+          <button class="text-button" type="button" data-back-p1>← Volver a P-1 Personal</button>
+        </div>
+
+        <div class="memorandum-privacy"><strong>Prototipo académico</strong><span>Utilice únicamente identidades y hechos ficticios. La autoridad competente determina la sanción.</span></div>
+
+        <form id="memorandum-form" class="memorandum-form">
+          <article class="panel memorandum-block">
+            <div class="panel-title"><div><p class="eyebrow">01 · IDENTIFICACIÓN</p><h3>Datos del documento</h3></div><span id="memorandum-status" class="badge green">Borrador</span></div>
+            <div class="memorandum-grid memorandum-grid-four">
+              <label>Sección emisora<input id="memo-section" type="text" value="Sec. I Pers." required /></label>
+              <label>Número<input id="memo-number" type="number" min="1" value="83" required /></label>
+              <label>Gestión<input id="memo-year" type="number" min="0" max="99" value="26" required /></label>
+              <label>Fecha<input id="memo-date" type="date" required /></label>
+              <label>Lugar<input id="memo-place" type="text" value="Cochabamba" required /></label>
+            </div>
+          </article>
+
+          <article class="panel memorandum-block">
+            <div class="panel-title"><div><p class="eyebrow">02 · DESTINATARIO</p><h3>Personal sancionado</h3></div><span class="memorandum-auto-label">Campos modificables</span></div>
+            <div class="memorandum-grid memorandum-grid-three">
+              <label>Grado y especialidad<input id="memo-rank" type="text" value="Sgto. Incl. Tec. Av." required /></label>
+              <label>Nombres y apellidos<input id="memo-name" type="text" value="Personal demostrativo" required /></label>
+              <label>Cargo<select id="memo-position" required></select></label>
+              <label>Tratamiento inicial<input id="memo-treatment" type="text" value="Señor Sargento" required /></label>
+              <label id="memo-other-position-wrap" hidden>Otro cargo<input id="memo-other-position" type="text" /></label>
+            </div>
+          </article>
+
+          <article class="panel memorandum-block">
+            <div class="panel-title"><div><p class="eyebrow">03 · HECHOS</p><h3>Descripción de la conducta</h3></div><span class="memorandum-auto-label">Redacción revisable</span></div>
+            <label class="memorandum-wide-label">Relación clara y concreta de los hechos<textarea id="memo-facts" rows="6" required>Por haber incumplido una disposición del servicio, conforme a los antecedentes demostrativos registrados por el superior responsable.</textarea></label>
+          </article>
+
+          <article class="panel memorandum-block">
+            <div class="panel-title"><div><p class="eyebrow">04 · FUNDAMENTO</p><h3>Faltas disciplinarias</h3></div><span class="memorandum-auto-label">Reglamento N.º 23</span></div>
+            <div class="memorandum-fault-picker">
+              <label>Clasificación<select id="memo-fault-class"><option value="grave">Falta grave · Artículo 10</option><option value="leve">Falta leve · Artículo 11</option><option value="especial">Disposición especial</option></select></label>
+              <label>Artículo, numeral y falta<select id="memo-fault-select"></select></label>
+              <button id="memo-add-fault" class="secondary-light-button" type="button">Añadir falta</button>
+            </div>
+            <div id="memo-selected-faults" class="memo-selected-faults"></div>
+            <label class="memorandum-wide-label">Fundamento que se insertará en el memorándum<textarea id="memo-legal-basis" rows="6" readonly></textarea></label>
+          </article>
+
+          <article class="panel memorandum-block">
+            <div class="panel-title"><div><p class="eyebrow">05 · SANCIÓN</p><h3>Medida impuesta</h3></div><span class="memorandum-auto-label">Decisión de la autoridad</span></div>
+            <div class="memorandum-grid memorandum-grid-three">
+              <label>Tipo de sanción<select id="memo-sanction-type"><option>Arresto</option><option>Llamada de atención</option><option>Otra medida autorizada</option></select></label>
+              <label>Duración o cantidad<input id="memo-sanction-duration" type="text" value="48 horas" required /></label>
+              <label>Lugar de cumplimiento<input id="memo-sanction-place" type="text" value="Prevención de guardia de la Unidad" required /></label>
+              <label>Fecha y hora de inicio<input id="memo-sanction-start" type="datetime-local" /></label>
+              <label>Fecha y hora de conclusión<input id="memo-sanction-end" type="datetime-local" /></label>
+              <label class="memo-checkbox"><input id="memo-without-prejudice" type="checkbox" checked /> Sin perjuicio de cumplir sus obligaciones</label>
+            </div>
+          </article>
+
+          <article class="panel memorandum-block">
+            <div class="panel-title"><div><p class="eyebrow">06 · FIRMA</p><h3>Autoridad responsable</h3></div><span class="memorandum-auto-label">Datos configurables</span></div>
+            <div class="memorandum-grid memorandum-grid-three">
+              <label>Nombres y apellidos<input id="memo-signer-name" type="text" value="MIGUEL EDUARDO SANTIESTEBAN STROEBEL" required /></label>
+              <label>Grado<input id="memo-signer-rank" type="text" value="TENIENTE CORONEL DEM." required /></label>
+              <label>Iniciales<input id="memo-initials" type="text" value="CHA/PJF/jcp.-" required /></label>
+            </div>
+          </article>
+
+          <div class="memorandum-actions no-print">
+            <p id="memorandum-validation">Seleccione al menos una falta disciplinaria.</p>
+            <div>
+              <button id="memorandum-preview" class="secondary-light-button" type="button">Vista previa</button>
+              <button id="memorandum-print" class="secondary-light-button" type="button">Generar memorándum oficial PDF</button>
+              <button id="memorandum-archive" class="secondary-light-button" type="button">Cerrar y archivar</button>
+              <button class="primary-button" type="submit">Guardar borrador</button>
+            </div>
+          </div>
+        </form>
+
+        <article class="panel memorandum-history no-print">
+          <div class="panel-title"><div><p class="eyebrow">HISTORIAL</p><h3>Memorándums archivados</h3></div><span id="memorandum-archive-count" class="badge">0 registros</span></div>
+          <div id="memorandum-archive-list"><p class="memorandum-empty">Todavía no existen memorándums archivados.</p></div>
+          <p class="archive-note">El prototipo conserva el historial en este navegador. La versión institucional requerirá Supabase y permisos por rol.</p>
+        </article>
+      </section>
     </main>
   </div>
 
   <section id="official-report-print" class="official-report" aria-hidden="true"></section>
+  <section id="official-memorandum-print" class="official-memorandum" aria-hidden="true"></section>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
