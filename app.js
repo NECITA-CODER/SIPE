@@ -2,8 +2,14 @@ const views = document.querySelectorAll('.view');
 const navItems = document.querySelectorAll('.nav-item:not(.locked)');
 const title = document.getElementById('page-title');
 const toast = document.getElementById('toast');
+const viewBackButton = document.getElementById('view-back-button');
+let currentViewId = 'inicio';
+const viewHistory = [];
 
-function showView(id) {
+function showView(id, options = {}) {
+  if (![...views].some(view => view.id === id)) return;
+  if (id !== currentViewId && !options.fromHistory) viewHistory.push(currentViewId);
+  currentViewId = id;
   views.forEach(view => view.classList.toggle('active-view', view.id === id));
   const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : ['cuadros', 'memorandums'].includes(id) ? 'p1' : id;
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
@@ -18,6 +24,12 @@ function showView(id) {
     memorandums: 'Memorándums de sanción'
   };
   title.textContent = pageTitles[id] || pageTitles.inicio;
+  viewBackButton.hidden = id === 'inicio' || viewHistory.length === 0;
+}
+
+function goBackView(fallback = 'inicio') {
+  const previousView = viewHistory.pop() || fallback;
+  showView(previousView, { fromHistory: true });
 }
 
 function notify(message) {
@@ -28,6 +40,7 @@ function notify(message) {
 }
 
 navItems.forEach(item => item.addEventListener('click', () => showView(item.dataset.view)));
+viewBackButton.addEventListener('click', () => goBackView());
 document.querySelectorAll('[data-open-p1]').forEach(item => {
   item.addEventListener('click', () => showView('p1'));
   item.addEventListener('keydown', event => { if (event.key === 'Enter') showView('p1'); });
@@ -344,7 +357,7 @@ function loadCuadrosPart() {
   return renderCuadrosTotals();
 }
 
-document.querySelectorAll('[data-back-p1]').forEach(button => button.addEventListener('click', () => showView('p1')));
+document.querySelectorAll('[data-back-p1]').forEach(button => button.addEventListener('click', () => goBackView('p1')));
 document.getElementById('cuadros-date').value = new Date().toISOString().slice(0, 10);
 cuadrosForm.addEventListener('input', renderCuadrosTotals);
 cuadrosForm.addEventListener('submit', event => {

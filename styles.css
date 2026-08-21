@@ -78,3 +78,6 @@
 @media(max-width:1050px){.memorandum-grid-four{grid-template-columns:repeat(3,1fr)}.memorandum-fault-picker{grid-template-columns:1fr}.memorandum-fault-picker button{justify-self:start}}
 @media(max-width:700px){.memorandum-grid-four,.memorandum-grid-three{grid-template-columns:1fr}.memorandum-actions,.memorandum-privacy{align-items:stretch;flex-direction:column}.memorandum-actions>div{display:grid;grid-template-columns:1fr}.memorandum-history-row{grid-template-columns:1fr 1fr}.memorandum-history-row button{grid-column:1/-1}}
 @media print{@page{size:Letter portrait;margin:0}.printing-official-memorandum .app-shell,.printing-official-memorandum #toast,.printing-official-memorandum .official-report{display:none!important}.printing-official-memorandum .official-memorandum{display:block!important}.printing-official-memorandum .memo-official-page{display:block!important}}
+
+.topbar-context{display:flex;align-items:center;gap:15px}.view-back-button{border:1px solid #abc5b3;background:#fff;color:var(--green);border-radius:7px;padding:9px 11px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}.view-back-button:hover{background:#edf5ef;border-color:var(--green2)}.view-back-button[hidden]{display:none}
+@media(max-width:620px){.topbar-context{align-items:flex-start;flex-direction:column;gap:8px}.view-back-button{padding:8px 10px}}
