@@ -481,6 +481,72 @@
         </article>
       </section>
 
+      <section id="tropa" class="view troop-view">
+        <div class="module-heading troop-heading">
+          <div>
+            <p class="eyebrow">MANTENIMIENTO DE EFECTIVOS</p>
+            <h2>Parte diario del personal de tropa</h2>
+            <p>Registro nominal de novedades de cabos, soldados, premilitares y demás personal de tropa.</p>
+          </div>
+          <button class="text-button" type="button" data-back-p1>← Volver a P-1 Personal</button>
+        </div>
+
+        <div class="troop-privacy"><strong>Prototipo académico</strong><span>Registre únicamente identidades ficticias. El documento oficial se genera en formato Carta horizontal.</span></div>
+
+        <form id="troop-form" class="troop-form">
+          <article class="panel troop-block">
+            <div class="panel-title"><div><p class="eyebrow">01 · IDENTIFICACIÓN</p><h3>Datos del radiograma</h3></div><span id="troop-status" class="badge green">Borrador</span></div>
+            <div class="troop-meta-grid">
+              <label>Fecha del parte<input id="troop-date" type="date" required /></label>
+              <label>Hora<input id="troop-time" type="time" value="08:00" required /></label>
+              <label>Lugar<input id="troop-place" type="text" value="Tolata" required /></label>
+              <label>Código del radiograma<input id="troop-code" type="text" value="768" required /></label>
+              <label>Referencia<input id="troop-reference" type="text" value="Sec. I Pers. N.º 768/26" required /></label>
+              <label>Unidad<input id="troop-unit" type="text" value="RIAEROTRANS-18 “VICTORIA”" readonly /></label>
+            </div>
+          </article>
+
+          <article class="panel troop-block">
+            <div class="panel-title"><div><p class="eyebrow">02 · RESUMEN</p><h3>Novedades registradas</h3></div><span id="troop-total" class="troop-auto-label">0 personas</span></div>
+            <div id="troop-summary" class="troop-summary" aria-label="Resumen por novedad"></div>
+          </article>
+
+          <article class="panel troop-block">
+            <div class="panel-title"><div><p class="eyebrow">03 · DETALLE NOMINAL</p><h3 id="troop-section-title">Personal fallecido</h3></div><span class="troop-auto-label">Secciones A–H</span></div>
+            <div id="troop-tabs" class="troop-tabs" role="tablist" aria-label="Tipos de novedad"></div>
+            <div class="troop-entry-grid">
+              <label>Grado o categoría<select id="troop-rank"><option>DGTE.</option><option>CABO</option><option selected>SLDO.</option><option>PREMIL.</option><option>OTRO</option></select></label>
+              <label>Nombres y apellidos<input id="troop-name" type="text" placeholder="Personal demostrativo 01" /></label>
+              <label>Unidad o subunidad<input id="troop-subunit" type="text" value="Unidad demostrativa" /></label>
+              <label>Fecha desde<input id="troop-from" type="date" /></label>
+              <label>Fecha hasta<input id="troop-to" type="date" /></label>
+              <label id="troop-detail-label">Causa o motivo<input id="troop-detail" type="text" placeholder="Dato correspondiente a la novedad" /></label>
+              <label>Situación u observación<input id="troop-observation" type="text" placeholder="Situación actual u observación" /></label>
+              <button id="troop-add-record" class="primary-button" type="button">+ Agregar personal</button>
+            </div>
+            <p id="troop-entry-validation" class="troop-validation">Complete grado, nombre y unidad para agregar un registro ficticio.</p>
+            <div class="troop-table-wrap">
+              <table class="troop-table"><thead><tr><th>N.º</th><th>Grado</th><th>Nombres y apellidos</th><th>Unidad</th><th>Desde</th><th>Hasta</th><th>Detalle</th><th>Situación</th><th></th></tr></thead><tbody id="troop-records"></tbody></table>
+            </div>
+          </article>
+
+          <div class="troop-actions no-print">
+            <p>Las secciones sin registros aparecerán como «NO SE REGISTRÓ» en el documento oficial.</p>
+            <div>
+              <button id="troop-print" class="secondary-light-button" type="button">Generar parte oficial PDF</button>
+              <button id="troop-archive" class="secondary-light-button" type="button">Cerrar y archivar</button>
+              <button class="primary-button" type="submit">Guardar borrador</button>
+            </div>
+          </div>
+        </form>
+
+        <article class="panel troop-history no-print">
+          <div class="panel-title"><div><p class="eyebrow">HISTORIAL</p><h3>Partes diarios archivados</h3></div><span id="troop-archive-count" class="badge">0 registros</span></div>
+          <div id="troop-archive-list"><p class="troop-empty">Todavía no existen partes de tropa archivados.</p></div>
+          <p class="archive-note">El prototipo conserva el historial en este navegador. La versión institucional requerirá Supabase y permisos por rol.</p>
+        </article>
+      </section>
+
       <section id="memorandums" class="view memorandum-view">
         <div class="module-heading memorandum-heading">
           <div>
@@ -574,6 +640,7 @@
   </div>
 
   <section id="official-report-print" class="official-report" aria-hidden="true"></section>
+  <section id="official-troop-report-print" class="official-troop-report" aria-hidden="true"></section>
   <section id="official-memorandum-print" class="official-memorandum" aria-hidden="true"></section>
 
   <div id="toast" role="status" aria-live="polite"></div>
