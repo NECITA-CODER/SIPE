@@ -11,7 +11,7 @@ function showView(id, options = {}) {
   if (id !== currentViewId && !options.fromHistory) viewHistory.push(currentViewId);
   currentViewId = id;
   views.forEach(view => view.classList.toggle('active-view', view.id === id));
-  const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : ['cuadros', 'memorandums'].includes(id) ? 'p1' : id;
+  const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : ['cuadros', 'tropa', 'memorandums'].includes(id) ? 'p1' : id;
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
     inicio: 'Inicio',
@@ -21,6 +21,7 @@ function showView(id, options = {}) {
     vacaciones: 'Reporte individual de vacaciones',
     informacion: 'Disposiciones generales',
     cuadros: 'Parte del personal de cuadros',
+    tropa: 'Parte diario del personal de tropa',
     memorandums: 'Memorándums de sanción'
   };
   title.textContent = pageTitles[id] || pageTitles.inicio;
@@ -252,6 +253,10 @@ function renderG1Detail(key) {
   document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => {
     if (button.dataset.register === 'cuadros') {
       showView('cuadros');
+      return;
+    }
+    if (button.dataset.register === 'tropa') {
+      showView('tropa');
       return;
     }
     if (button.dataset.register === 'memorandums') {
@@ -494,6 +499,141 @@ document.getElementById('cuadros-archive').addEventListener('click', () => {
 });
 loadCuadrosPart();
 renderCuadrosArchive();
+
+const troopSections = [
+  { id: 'fallecido', letter: 'A', title: 'Personal fallecido', detail: 'Causa del fallecimiento' },
+  { id: 'detenido', letter: 'B', title: 'Personal detenido y liberado', detail: 'Causa y centro de detención' },
+  { id: 'falta_lista', letter: 'C', title: 'Personal que falta a lista', detail: 'Formación o parte al que faltó' },
+  { id: 'hospitalizado', letter: 'D', title: 'Personal hospitalizado', detail: 'Diagnóstico y nosocomio' },
+  { id: 'sanidad', letter: 'E', title: 'Personal internado en sanidad', detail: 'Diagnóstico o causa' },
+  { id: 'permiso', letter: 'F', title: 'Permiso de comando y/o cumpleaños', detail: 'Causa o motivo del permiso' },
+  { id: 'bajas', letter: 'G', title: 'Bajas', detail: 'Documento y motivo de la baja' },
+  { id: 'comision', letter: 'H', title: 'Comisión PP.MM.AA., PP.MM.SS. y otros', detail: 'Motivo y escalón de la comisión' }
+];
+const troopForm = document.getElementById('troop-form');
+const troopStorageKey = 'simu_demo_parte_tropa_v1';
+const troopArchiveKey = 'simu_demo_archivo_tropa_v1';
+let activeTroopSection = troopSections[0].id;
+let troopRecords = [
+  { section: 'falta_lista', rank: 'SLDO.', name: 'Personal demostrativo 01', unit: 'Unidad demostrativa', from: '2026-08-20', to: '', detail: 'Lista de diana', observation: 'En verificación' },
+  { section: 'permiso', rank: 'CABO', name: 'Personal demostrativo 02', unit: 'Unidad demostrativa', from: '2026-08-20', to: '2026-08-20', detail: 'Permiso demostrativo', observation: 'Concluido' }
+];
+
+function troopSection(id = activeTroopSection) { return troopSections.find(section => section.id === id) || troopSections[0]; }
+function troopDate(value) {
+  if (!value) return '—';
+  const [year, month, day] = value.split('-').map(Number);
+  return new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: 'short', year: '2-digit' }).format(new Date(year, month - 1, day)).replace('.', '').toUpperCase();
+}
+function troopData() {
+  return {
+    date: document.getElementById('troop-date').value,
+    time: document.getElementById('troop-time').value,
+    place: document.getElementById('troop-place').value.trim(),
+    code: document.getElementById('troop-code').value.trim(),
+    reference: document.getElementById('troop-reference').value.trim(),
+    records: troopRecords.map(record => ({ ...record }))
+  };
+}
+function renderTroopTabs() {
+  document.getElementById('troop-tabs').innerHTML = troopSections.map(section => {
+    const count = troopRecords.filter(record => record.section === section.id).length;
+    return `<button type="button" role="tab" aria-selected="${section.id === activeTroopSection}" class="${section.id === activeTroopSection ? 'active' : ''}" data-troop-section="${section.id}"><b>${section.letter}</b><span>${section.title}</span><i>${count}</i></button>`;
+  }).join('');
+  document.querySelectorAll('[data-troop-section]').forEach(button => button.addEventListener('click', () => { activeTroopSection = button.dataset.troopSection; renderTroopModule(); }));
+}
+function renderTroopSummary() {
+  document.getElementById('troop-summary').innerHTML = troopSections.map(section => {
+    const count = troopRecords.filter(record => record.section === section.id).length;
+    return `<article><span>${section.letter}</span><div><small>${escapeOfficial(section.title)}</small><strong>${count}</strong></div></article>`;
+  }).join('');
+  setText('troop-total', `${troopRecords.length} ${troopRecords.length === 1 ? 'persona' : 'personas'}`);
+}
+function renderTroopRecords() {
+  const records = troopRecords.filter(record => record.section === activeTroopSection);
+  const tbody = document.getElementById('troop-records');
+  tbody.innerHTML = records.length ? records.map((record, index) => `<tr><td>${index + 1}</td><td>${escapeOfficial(record.rank)}</td><td>${escapeOfficial(record.name)}</td><td>${escapeOfficial(record.unit)}</td><td>${troopDate(record.from)}</td><td>${troopDate(record.to)}</td><td>${escapeOfficial(record.detail || '—')}</td><td>${escapeOfficial(record.observation || '—')}</td><td><button type="button" data-remove-troop="${troopRecords.indexOf(record)}" aria-label="Eliminar registro">×</button></td></tr>`).join('') : '<tr class="troop-no-records"><td colspan="9">NO SE REGISTRÓ PERSONAL EN ESTA NOVEDAD</td></tr>';
+  tbody.querySelectorAll('[data-remove-troop]').forEach(button => button.addEventListener('click', () => { troopRecords.splice(Number(button.dataset.removeTroop), 1); renderTroopModule(); notify('Registro demostrativo eliminado.'); }));
+}
+function renderTroopModule() {
+  const section = troopSection();
+  setText('troop-section-title', `${section.letter}. ${section.title}`);
+  document.getElementById('troop-detail-label').childNodes[0].nodeValue = `${section.detail}`;
+  renderTroopTabs();
+  renderTroopSummary();
+  renderTroopRecords();
+}
+function clearTroopEntry() {
+  ['troop-name', 'troop-from', 'troop-to', 'troop-detail', 'troop-observation'].forEach(id => { document.getElementById(id).value = ''; });
+}
+document.getElementById('troop-add-record').addEventListener('click', () => {
+  const record = {
+    section: activeTroopSection,
+    rank: document.getElementById('troop-rank').value,
+    name: document.getElementById('troop-name').value.trim(),
+    unit: document.getElementById('troop-subunit').value.trim(),
+    from: document.getElementById('troop-from').value,
+    to: document.getElementById('troop-to').value,
+    detail: document.getElementById('troop-detail').value.trim(),
+    observation: document.getElementById('troop-observation').value.trim()
+  };
+  if (!record.rank || !record.name || !record.unit) return notify('Complete grado, nombres y unidad antes de agregar.');
+  if (record.to && record.from && record.to < record.from) return notify('La fecha hasta no puede ser anterior a la fecha desde.');
+  troopRecords.push(record);
+  clearTroopEntry();
+  renderTroopModule();
+  notify('Personal agregado a la novedad seleccionada.');
+});
+function saveTroopDraft() {
+  const data = troopData();
+  localStorage.setItem(troopStorageKey, JSON.stringify(data));
+  setText('troop-status', 'Borrador guardado');
+  return data;
+}
+function applyTroopData(data) {
+  if (!data) return;
+  document.getElementById('troop-date').value = data.date || '';
+  document.getElementById('troop-time').value = data.time || '08:00';
+  document.getElementById('troop-place').value = data.place || 'Tolata';
+  document.getElementById('troop-code').value = data.code || '';
+  document.getElementById('troop-reference').value = data.reference || '';
+  troopRecords = Array.isArray(data.records) ? data.records.map(record => ({ ...record })) : [];
+  renderTroopModule();
+}
+function readTroopArchive() {
+  try { const data = JSON.parse(localStorage.getItem(troopArchiveKey) || '[]'); return Array.isArray(data) ? data : []; } catch { return []; }
+}
+function renderTroopArchive() {
+  const archive = readTroopArchive();
+  setText('troop-archive-count', `${archive.length} ${archive.length === 1 ? 'registro' : 'registros'}`);
+  const container = document.getElementById('troop-archive-list');
+  container.innerHTML = archive.length ? archive.map((item, index) => `<article class="troop-history-row"><div><span>Fecha</span><strong>${escapeOfficial(item.date || 'Sin fecha')}</strong></div><div><span>Radiograma</span><strong>${escapeOfficial(item.code || '—')}</strong></div><div><span>Novedades nominales</span><strong>${item.records?.length || 0}</strong></div><div><span>Estado</span><strong>Archivado</strong></div><button type="button" data-load-troop="${index}">Consultar</button></article>`).join('') : '<p class="troop-empty">Todavía no existen partes de tropa archivados.</p>';
+  container.querySelectorAll('[data-load-troop]').forEach(button => button.addEventListener('click', () => { applyTroopData(archive[Number(button.dataset.loadTroop)]); setText('troop-status', 'Consulta de archivo'); window.scrollTo({ top: 0, behavior: 'smooth' }); notify('Parte archivado cargado en modo de consulta.'); }));
+}
+function troopOfficialSection(section, records) {
+  const rows = records.length ? records.map((record, index) => `<tr><td>${index + 1}</td><td>${escapeOfficial(record.rank)}</td><td>${escapeOfficial(record.name)}</td><td>${escapeOfficial(record.unit)}</td><td>${troopDate(record.from)}</td><td>${troopDate(record.to)}</td><td>${escapeOfficial(record.detail || '—')}</td><td>${escapeOfficial(record.observation || '—')}</td></tr>`).join('') : '<tr><td colspan="8"><b>NO SE REGISTRÓ</b></td></tr>';
+  return `<section class="troop-official-section"><h3>${section.letter}. ${escapeOfficial(section.title.toUpperCase())}</h3><table><thead><tr><th>N.º</th><th>GRADO</th><th>NOMBRES Y APELLIDOS</th><th>UNIDAD</th><th>DESDE</th><th>HASTA</th><th>${escapeOfficial(section.detail.toUpperCase())}</th><th>SITUACIÓN / OBSERVACIÓN</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+}
+function buildOfficialTroopReport() {
+  const data = troopData();
+  const groups = [[0, 1, 2], [3, 4, 5], [6, 7]];
+  document.getElementById('official-troop-report-print').innerHTML = groups.map((indices, pageIndex) => `<article class="troop-official-page">
+    <header><div><b>SÉPTIMA DIVISIÓN DEL EJÉRCITO</b><b>RIAEROTRANS-18 “VICTORIA”</b><b>BOLIVIA</b></div><div class="troop-official-code"><b>RADIOGRAMA EXPEDIDO</b><span>N.º ${escapeOfficial(data.code)}</span></div></header>
+    <p class="troop-official-place">${escapeOfficial(data.place)}, ${troopDate(data.date)} · ${escapeOfficial(data.time)} Hrs.</p>
+    ${pageIndex === 0 ? `<div class="troop-official-routing"><b>AL:</b><span>COMANDO DIV-7</span><b>DEL:</b><span>RIAEROTRANS-18 “VICTORIA”</span></div><p class="troop-official-reference">REF.: ${escapeOfficial(data.reference)}</p><h1>PARTE DIARIO DE NOVEDADES DEL PERSONAL DE TROPA</h1>` : '<h1>CONTINUACIÓN DEL PARTE DIARIO DE NOVEDADES</h1>'}
+    ${indices.map(index => { const section = troopSections[index]; return troopOfficialSection(section, data.records.filter(record => record.section === section.id)); }).join('')}
+    ${pageIndex === 2 ? '<div class="troop-official-signatures"><div><span>FIRMA DEMOSTRATIVA</span><b>JEFE DE PERSONAL</b></div><div><span>FIRMA DEMOSTRATIVA</span><b>AUXILIAR DE PERSONAL</b></div></div><p class="troop-official-warning">DOCUMENTO DEMOSTRATIVO · NO CONTIENE INFORMACIÓN INSTITUCIONAL REAL</p>' : ''}
+    <footer>${pageIndex + 1} - ${groups.length}</footer>
+  </article>`).join('');
+}
+troopForm.addEventListener('submit', event => { event.preventDefault(); saveTroopDraft(); notify('Parte diario de tropa guardado como borrador demostrativo.'); });
+document.getElementById('troop-archive').addEventListener('click', () => { const data = saveTroopDraft(); const archive = readTroopArchive(); archive.unshift({ ...data, archivedAt: new Date().toISOString() }); localStorage.setItem(troopArchiveKey, JSON.stringify(archive)); setText('troop-status', 'Archivado'); renderTroopArchive(); notify('Parte diario cerrado y archivado.'); });
+document.getElementById('troop-print').addEventListener('click', () => { buildOfficialTroopReport(); document.body.classList.add('printing-official-troop-report'); window.setTimeout(() => window.print(), 80); });
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-troop-report'));
+document.getElementById('troop-date').value = new Date().toISOString().slice(0, 10);
+try { const savedTroop = JSON.parse(localStorage.getItem(troopStorageKey) || 'null'); if (savedTroop) applyTroopData(savedTroop); } catch { localStorage.removeItem(troopStorageKey); }
+renderTroopModule();
+renderTroopArchive();
 
 const memorandumPositions = [
   'SEGUNDO CMTE. DEL GCAE-1','SEGUNDO CMTE. DEL ECAE-B','SUBOFICIAL DE COMANDO','AYUDANTÍA','DIRECTOR DE LA BANDA DE MÚSICA','OFICIAL DE PERSONAL','OFICIAL DE LA SEC. III OPS.','OFICIAL DE LOGÍSTICA','OFICIAL DE INTELIGENCIA','OFICIAL DE AC./OC.','OFICIAL DE RR. PP.','COMANDANTE DE PATRULLA','COMANDANTE DE SECCIÓN','PRIMERO DE SECCIÓN','CMTE. DE ESCUADRÓN','PRIMERO DE ESCUADRÓN','CMTE. DE ESCUADRÓN BASE','CMTE. DE EDRÓN. MANTENIMIENTO','CMTE. DE EDRÓN. OP. AÉREAS','CMTE. DE EDRÓN. ESTANDARIZACIÓN','CMTE. DE EDRÓN. SIMULACIÓN','CMTE. DE EDRÓN. SEG. DE VUELO','AUXILIAR DE LA PLANA MAYOR','AUX. DE LA SEC. PERSONAL','AUX. DE LA SEC. III OPS.','AUX. DE LA SEC. INTELIGENCIA','AUX. DE LA SEC. LOGÍSTICA','AUX. DE LA SEC. AC./OC.','AUX. DE LA SEC. RR. PP.','JEFE DE MANTENIMIENTO','JEFE DE CONTROL DE CALIDAD','JEFE DE LÍNEA DE VUELO','JEFE DE TRANSPORTES','JEFE DE RADIO','AUX. DEL EDRÓN. MANTTO.','AUX. DE LA SEC. RADIO','AUX. DEL JEFE DE TRANSPORTES','CAJERO HABILITADO','AUX. DE LA SEC. CAJA','TÉCNICO DE MANTENIMIENTO','TÉCNICO DEL SIMULADOR DE VUELO','ENCARGADO DE MAT. BÉLICO','MÉDICO OPERATIVO','MÉDICO DENTISTA','OTRO CARGO'
