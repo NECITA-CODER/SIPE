@@ -141,6 +141,9 @@
             <button class="chief-card" data-field="P-4 Logística"><span>P-4</span><strong>Jefe de Logística</strong><small>Desarrollo futuro</small></button>
             <button class="chief-card" data-field="P-5 Asuntos Civiles"><span>P-5</span><strong>Jefe de Asuntos Civiles</strong><small>Desarrollo futuro</small></button>
           </div>
+          <button id="open-coordination-room" class="coordination-room-entry" type="button">
+            <span>COORDINACIÓN INTERNA</span><strong>Sala de Coordinación</strong><small>Intercambio documental entre los cinco campos y convocatoria general.</small><b>Ingresar →</b>
+          </button>
         </div>
       </section>
 
@@ -353,7 +356,7 @@
         <section class="g1-functions" aria-labelledby="g1-functions-title">
           <div class="section-heading">
             <div><p class="eyebrow">ESTADO MAYOR COORDINADOR</p><h3 id="g1-functions-title">Funciones y actividades específicas del G-1</h3></div>
-            <span class="doctrine-label">6 funciones · 13 áreas de control</span>
+            <span class="doctrine-label">6 funciones · 14 áreas de control</span>
           </div>
 
           <div class="g1-grid">
@@ -361,7 +364,7 @@
               <span class="g1-number">01</span><div><strong>Mantenimiento de efectivos</strong><small>Partes del personal de la unidad.</small></div><i>2 áreas</i>
             </button>
             <button class="g1-card" data-g1="administracion">
-              <span class="g1-number">02</span><div><strong>Administración del personal</strong><small>Vacaciones, relaciones nominales y filiaciones.</small></div><i>3 áreas</i>
+              <span class="g1-number">02</span><div><strong>Administración del personal</strong><small>Vacaciones, relaciones nominales, filiaciones y hojas de vida.</small></div><i>4 áreas</i>
             </button>
             <button class="g1-card" data-g1="disciplina">
               <span class="g1-number">03</span><div><strong>Mantenimiento de la disciplina, ley y orden</strong><small>Control documental de sanciones.</small></div><i>1 área</i>
@@ -397,6 +400,86 @@
           <h3 id="p1-register-panel-title">Registro administrativo</h3>
           <p>Este espacio está preparado para incorporar formularios, antecedentes, archivo e historial de acuerdo con el formato institucional correspondiente.</p>
         </article>
+      </section>
+
+      <section id="relaciones" class="view nominal-view">
+        <div class="module-heading nominal-heading">
+          <div><p class="eyebrow">ADMINISTRACIÓN DEL PERSONAL</p><h2>Relaciones nominales</h2><p>Registro del personal organizado por armas y especialidades.</p></div>
+          <button class="text-button" type="button" data-back-administration>← Volver a Administración del personal</button>
+        </div>
+        <div class="memorandum-privacy"><strong>Información reservada</strong><span>El prototipo utiliza identidades ficticias. La versión institucional requerirá acceso restringido y almacenamiento seguro.</span></div>
+
+        <article class="panel nominal-block">
+          <div class="panel-title"><div><p class="eyebrow">ORGANIZACIÓN</p><h3>Armas y especialidades</h3></div><span id="nominal-total" class="badge green">0 registros</span></div>
+          <div id="nominal-tabs" class="nominal-tabs" role="tablist" aria-label="Armas y especialidades"></div>
+        </article>
+
+        <article class="panel nominal-block">
+          <div class="panel-title"><div><p class="eyebrow">REGISTRO NOMINAL</p><h3 id="nominal-section-title">Infantería</h3></div><span class="badge">Datos ficticios</span></div>
+          <form id="nominal-entry-form" class="nominal-entry-form">
+            <label>Grado<input id="nominal-rank" type="text" placeholder="Ej.: Al. 2do. AM. INF." required /></label>
+            <label>Apellidos y nombres<input id="nominal-name" type="text" placeholder="Identidad demostrativa" required /></label>
+            <label>Observaciones<input id="nominal-observation" type="text" placeholder="Sin novedad" /></label>
+            <button class="primary-button" type="submit">Agregar personal</button>
+          </form>
+          <div class="nominal-table-wrap">
+            <table class="nominal-table"><thead><tr><th>N.º</th><th>Grado</th><th>Apellidos y nombres</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody id="nominal-records"></tbody></table>
+          </div>
+        </article>
+
+        <div class="nominal-actions no-print">
+          <p>La clasificación y los registros se conservan únicamente en este navegador demostrativo.</p>
+          <div><button id="nominal-print" class="secondary-light-button" type="button">Generar relación nominal PDF</button><button id="nominal-save" class="primary-button" type="button">Guardar relación nominal</button></div>
+        </div>
+      </section>
+
+      <section id="hoja-vida" class="view records-view">
+        <div class="module-heading"><div><p class="eyebrow">ADMINISTRACIÓN DEL PERSONAL</p><h2>Hoja de vida del personal</h2><p>Registro editable de antecedentes incorporados al legajo individual.</p></div><button class="text-button" type="button" data-back-administration>← Volver a Administración del personal</button></div>
+        <div class="memorandum-privacy"><strong>Información reservada</strong><span>Esta demostración usa datos ficticios. El acceso institucional deberá restringirse por rol.</span></div>
+        <form id="life-record-form" class="panel record-form">
+          <div class="panel-title"><div><p class="eyebrow">01 · IDENTIFICACIÓN</p><h3>Datos personales</h3></div><span id="life-status" class="badge green">Borrador</span></div>
+          <div class="record-grid four"><label>Fotografía<input id="life-photo" type="file" accept="image/*"></label><label>Grado y arma<input id="life-rank" value="Cap. Inf." required></label><label>Apellidos<input id="life-lastname" value="Personal demostrativo" required></label><label>Nombres<input id="life-name" value="Ejemplo" required></label><label>Cédula de identidad<input id="life-id" value="0000000 DEMO" required></label></div>
+          <div class="panel-title compact"><div><p class="eyebrow">02 · ANTECEDENTES</p><h3>Registros de la hoja de vida</h3></div><button id="life-add-row" class="text-button" type="button">+ Agregar antecedente</button></div>
+          <div class="life-table-wrap"><table class="record-table"><thead><tr><th>Tipo</th><th>Día</th><th>Mes</th><th>Año</th><th>Motivo o detalle</th><th>Impuesto por</th><th></th></tr></thead><tbody id="life-record-rows"></tbody></table></div>
+          <div class="record-actions"><button id="life-print" class="secondary-light-button" type="button">Imprimir hoja de vida</button><button id="life-archive" class="secondary-light-button" type="button">Guardar en historial</button><button class="primary-button" type="submit">Guardar borrador</button></div>
+        </form>
+        <article class="panel record-history"><div class="panel-title"><div><p class="eyebrow">HISTORIAL</p><h3>Hojas guardadas</h3></div><span id="life-history-count" class="badge">0 registros</span></div><div id="life-history"></div></article>
+      </section>
+
+      <section id="felicitaciones" class="view records-view">
+        <div class="module-heading"><div><p class="eyebrow">INCREMENTO Y MANTENIMIENTO DE LA MORAL</p><h2>Memorándums de felicitación</h2><p>Elaboración, edición, archivo e impresión de reconocimientos.</p></div><button class="text-button" type="button" data-back-moral>← Volver a Moral</button></div>
+        <form id="congratulations-form" class="panel record-form">
+          <div class="record-grid three"><label>Sección y número<input id="congrats-number" value="Sec. I - Pers. N.º 001/26" required></label><label>Lugar<input id="congrats-place" value="Tolata" required></label><label>Fecha<input id="congrats-date" type="date" required></label><label>Grado<input id="congrats-rank" value="Cap. Inf." required></label><label>Apellidos y nombres<input id="congrats-name" value="Personal demostrativo" required></label><label>Cargo<input id="congrats-position" value="COMANDANTE DE SECCIÓN" required></label></div>
+          <label>Motivo de la felicitación<textarea id="congrats-reason" rows="7" required>Por haber demostrado profesionalismo, responsabilidad y espíritu de cuerpo en el cumplimiento de las actividades asignadas a la Unidad.</textarea></label>
+          <div class="record-grid three"><label>Autoridad firmante<input id="congrats-signer" value="PERSONAL DEMOSTRATIVO" required></label><label>Grado y cargo<input id="congrats-signer-rank" value="TCNL. DEM. · COMANDANTE DE UNIDAD" required></label><label>Iniciales<input id="congrats-initials" value="P-1/demo.-" required></label></div>
+          <div class="record-actions"><button id="congrats-print" class="secondary-light-button" type="button">Generar memorándum PDF</button><button id="congrats-archive" class="secondary-light-button" type="button">Cerrar y archivar</button><button class="primary-button" type="submit">Guardar borrador</button></div>
+        </form>
+        <article class="panel record-history"><div class="panel-title"><div><p class="eyebrow">HISTORIAL</p><h3>Memorándums archivados</h3></div><span id="congrats-history-count" class="badge">0 registros</span></div><div id="congrats-history"></div></article>
+      </section>
+
+      <section id="radiogramas" class="view records-view">
+        <div class="module-heading"><div><p class="eyebrow">ADMINISTRACIÓN INTERNA</p><h2>Radiogramas</h2><p>Control independiente de documentos recibidos y expedidos.</p></div><button class="text-button" type="button" data-back-internal>← Volver a Administración interna</button></div>
+        <div class="record-selector"><button class="record-selector-card active" data-radiogram-tab="received"><span>01</span><strong>Radiogramas recibidos</strong><small>Cargar, registrar y consultar archivos.</small></button><button class="record-selector-card" data-radiogram-tab="sent"><span>02</span><strong>Radiogramas expedidos</strong><small>Redactar, editar, archivar e imprimir.</small></button></div>
+        <section id="radiogram-received-panel" class="panel record-form">
+          <div class="panel-title"><div><p class="eyebrow">DOCUMENTACIÓN RECIBIDA</p><h3>Cargar radiograma</h3></div><span class="badge directive">Acceso P-1</span></div>
+          <form id="received-radiogram-form"><div class="record-grid three"><label>Número<input id="received-number" required></label><label>Origen<input id="received-origin" required></label><label>Fecha y hora<input id="received-datetime" type="datetime-local" required></label><label>Referencia<input id="received-reference" required></label><label>Asunto<input id="received-subject" required></label><label>Archivo<input id="received-file" type="file" accept=".pdf,.doc,.docx,.jpg,.png" required></label></div><div class="record-actions"><button class="primary-button" type="submit">Guardar radiograma recibido</button></div></form>
+          <div id="received-radiogram-history" class="simple-history"></div>
+        </section>
+        <section id="radiogram-sent-panel" class="panel record-form" hidden>
+          <div class="panel-title"><div><p class="eyebrow">RADIOGRAMA EXPEDIDO</p><h3>Formato editable</h3></div><span id="sent-radiogram-status" class="badge green">Borrador</span></div>
+          <form id="sent-radiogram-form"><div class="record-grid three"><label>Lugar, grupo fecha-hora<input id="sent-datetime" value="TOLATA, 031600-SEP-26." required></label><label>Al<input id="sent-to" value="CMDO. DIV-7" required></label><label>Localidad destino<input id="sent-to-place" value="COCHABAMBA" required></label><label>Del<input id="sent-from" value="CMDO. DEL RIAEROTRANS-18 “VICTORIA”" required></label><label>Localidad origen<input id="sent-from-place" value="TOLATA" required></label><label>Sección y número<input id="sent-number" value="SEC. I - PERS. N.º 001/26.-" required></label></div><label>Texto del radiograma<textarea id="sent-body" rows="8" required>EN CUMPLIMIENTO A LA DISPOSICIÓN DE REFERENCIA, SE TOMÓ NOTA Y SE DARÁ ESTRICTO CUMPLIMIENTO. ATENTAMENTE.-</textarea></label><div class="record-grid three"><label>Nombre del firmante<input id="sent-signer" value="PERSONAL DEMOSTRATIVO" required></label><label>Grado<input id="sent-signer-rank" value="TCNL. DEM." required></label><label>Iniciales<input id="sent-initials" value="P-1/demo.-" required></label></div><div class="record-actions"><button id="sent-radiogram-print" class="secondary-light-button" type="button">Generar radiograma PDF</button><button id="sent-radiogram-archive" class="secondary-light-button" type="button">Cerrar y archivar</button><button class="primary-button" type="submit">Guardar borrador</button></div></form>
+          <div id="sent-radiogram-history" class="simple-history"></div>
+        </section>
+      </section>
+
+      <section id="coordinacion" class="view records-view">
+        <div class="module-heading"><div><p class="eyebrow">ACCESO RESTRINGIDO · PLANA MAYOR</p><h2>Sala de Coordinación</h2><p>Intercambio documental para conocimiento entre los campos de la conducción.</p></div><button class="text-button" type="button" data-open-jpm>← Volver al Jefe de la Plana Mayor</button></div>
+        <div class="memorandum-privacy"><strong>No reemplaza órdenes ni el conducto regular</strong><span>Acceso exclusivo del Comandante, Jefe de la Plana Mayor y P-1 a P-5.</span></div>
+        <div class="coordination-workspace">
+          <form id="coordination-form" class="panel record-form"><div class="panel-title"><div><p class="eyebrow">NUEVA COORDINACIÓN</p><h3>Comunicación entre dos campos</h3></div><span class="badge green">Trazable</span></div><div class="record-grid three"><label>Campo de origen<select id="coord-origin"><option>P-1 Personal</option><option>P-2 Inteligencia</option><option>P-3 Operaciones</option><option>P-4 Logística</option><option>P-5 Asuntos Civiles</option></select></label><label>Campo destinatario<select id="coord-destination"><option>P-2 Inteligencia</option><option>P-1 Personal</option><option>P-3 Operaciones</option><option>P-4 Logística</option><option>P-5 Asuntos Civiles</option></select></label><label>Prioridad<select id="coord-priority"><option>Normal</option><option>Urgente</option><option>Inmediata</option></select></label><label>Asunto<input id="coord-subject" required></label><label>Fecha y hora<input id="coord-datetime" type="datetime-local" required></label><label>Adjunto<input id="coord-file" type="file"></label></div><label>Información para conocimiento<textarea id="coord-message" rows="5" required></textarea></label><div class="record-actions"><button class="primary-button" type="submit">Registrar coordinación</button></div></form>
+          <article class="panel meeting-panel"><div class="panel-title"><div><p class="eyebrow">COMANDANTE / JPM</p><h3>Reunión general inmediata</h3></div><span class="badge directive">P-1 a P-5</span></div><label>Asunto<input id="meeting-subject" placeholder="Asunto de la reunión"></label><label>Enlace seguro de Google Meet<input id="meeting-link" type="url" placeholder="https://meet.google.com/..."></label><p>En el prototipo se registra un enlace autorizado. La creación automática requerirá Google Workspace, Calendar y OAuth institucional.</p><button id="meeting-create" class="primary-button" type="button">Convocar reunión general</button></article>
+        </div>
+        <article class="panel record-history"><div class="panel-title"><div><p class="eyebrow">SEGUIMIENTO</p><h3>Coordinaciones registradas</h3></div><span id="coordination-count" class="badge">0 registros</span></div><div id="coordination-history"></div></article>
       </section>
 
       <section id="cuadros" class="view cuadros-view">
@@ -579,10 +662,10 @@
             <div class="panel-title"><div><p class="eyebrow">01 · IDENTIFICACIÓN</p><h3>Datos del documento</h3></div><span id="memorandum-status" class="badge green">Borrador</span></div>
             <div class="memorandum-grid memorandum-grid-four">
               <label>Sección emisora<input id="memo-section" type="text" value="Sec. I Pers." required /></label>
-              <label>Número<input id="memo-number" type="number" min="1" value="83" required /></label>
+              <label>Número<input id="memo-number" type="number" min="1" value="182" required /></label>
               <label>Gestión<input id="memo-year" type="number" min="0" max="99" value="26" required /></label>
               <label>Fecha<input id="memo-date" type="date" required /></label>
-              <label>Lugar<input id="memo-place" type="text" value="Cochabamba" required /></label>
+              <label>Lugar<input id="memo-place" type="text" value="Tolata" required /></label>
             </div>
           </article>
 
@@ -628,9 +711,9 @@
           <article class="panel memorandum-block">
             <div class="panel-title"><div><p class="eyebrow">06 · FIRMA</p><h3>Autoridad responsable</h3></div><span class="memorandum-auto-label">Datos configurables</span></div>
             <div class="memorandum-grid memorandum-grid-three">
-              <label>Nombres y apellidos<input id="memo-signer-name" type="text" value="MIGUEL EDUARDO SANTIESTEBAN STROEBEL" required /></label>
-              <label>Grado<input id="memo-signer-rank" type="text" value="TENIENTE CORONEL DEM." required /></label>
-              <label>Iniciales<input id="memo-initials" type="text" value="CHA/PJF/jcp.-" required /></label>
+              <label>Nombres y apellidos<input id="memo-signer-name" type="text" value="PERSONAL DEMOSTRATIVO" required /></label>
+              <label>Grado y cargo<input id="memo-signer-rank" type="text" value="CAP. INF. · MIEMBRO DE LA PLANA MAYOR" required /></label>
+              <label>Iniciales<input id="memo-initials" type="text" value="PJF/jcp.-" required /></label>
             </div>
           </article>
 
@@ -658,6 +741,10 @@
   <section id="official-troop-report-print" class="official-troop-report" aria-hidden="true"></section>
   <section id="official-memorandum-print" class="official-memorandum" aria-hidden="true"></section>
   <section id="official-vacation-report-print" class="official-vacation-report" aria-hidden="true"></section>
+  <section id="official-nominal-report-print" class="official-nominal-report" aria-hidden="true"></section>
+  <section id="official-life-report-print" class="official-record-print" aria-hidden="true"></section>
+  <section id="official-congratulations-print" class="official-record-print" aria-hidden="true"></section>
+  <section id="official-radiogram-print" class="official-record-print" aria-hidden="true"></section>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
