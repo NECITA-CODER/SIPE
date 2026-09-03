@@ -182,7 +182,7 @@
       <section id="vacaciones" class="view">
         <div class="module-heading">
           <div><p class="eyebrow">CONSULTA INDIVIDUAL</p><h2>Reporte individual de vacaciones</h2><p>Consulta personal del rol, saldo disponible y movimientos de vacaciones.</p></div>
-          <div class="directive-badges"><button class="text-button" type="button" data-open-portal>Volver al portal</button><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
+          <div class="directive-badges"><button id="vacation-return" class="text-button" type="button">Volver al portal</button><button id="vacation-print" class="primary-button" type="button">Imprimir reporte individual</button><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
         </div>
 
         <div class="privacy-banner">
@@ -642,6 +642,7 @@
   <section id="official-report-print" class="official-report" aria-hidden="true"></section>
   <section id="official-troop-report-print" class="official-troop-report" aria-hidden="true"></section>
   <section id="official-memorandum-print" class="official-memorandum" aria-hidden="true"></section>
+  <section id="official-vacation-report-print" class="official-vacation-report" aria-hidden="true"></section>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
