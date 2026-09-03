@@ -378,7 +378,7 @@ function renderG1Detail(key) {
   document.querySelectorAll('.g1-card').forEach(card => card.classList.toggle('active', card.dataset.g1 === key));
   setText('p1-function-title', item.title);
   setText('p1-function-purpose', item.purpose);
-  document.getElementById('p1-function-detail').innerHTML = `<div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div><div class="g1-detail-grid g1-detail-single"><div><h5>Registros de la función</h5><div class="control-list">${item.areas.map(area => `<button class="p1-register-card" type="button" data-register="${area.id}" data-register-title="${area.title}" data-register-description="${area.description}"><span><strong>${area.title}</strong><small>${area.description}</small></span><b>Abrir registro →</b></button>`).join('')}</div></div></div>`;
+  document.getElementById('p1-function-detail').innerHTML = `<div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div><div class="g1-detail-grid g1-detail-single"><div><h5>Registros de la función</h5><div class="control-list p1-register-grid">${item.areas.map((area, index) => `<button class="p1-register-card" type="button" data-register="${area.id}" data-register-title="${area.title}" data-register-description="${area.description}"><span class="p1-register-number">${String(index + 1).padStart(2, '0')}</span><span class="p1-register-copy"><strong>${area.title}</strong><small>${area.description}</small></span><b>Abrir registro →</b></button>`).join('')}</div></div></div>`;
   document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => {
     if (button.dataset.register === 'cuadros') {
       showView('cuadros');
@@ -617,7 +617,7 @@ function buildOfficialReport() {
     </article>
     <article class="official-page official-page-three">
       ${pageThreeSections}
-      <div class="official-signature"><span>FIRMA DEMOSTRATIVA</span><strong>COMANDANTE DEL RIAEROTRANS-18 “VICTORIA”</strong></div>
+      <div class="official-signature"><span class="official-signature-space">FIRMA</span><span class="official-signature-line"></span><strong>NOMBRE DEL COMANDANTE</strong><span>GRADO</span><b>COMANDANTE DEL RIAEROTRANS-18 “VICTORIA”</b></div>
       <p class="official-initials">P-1/JPM/aux.-</p>
       <p class="official-demo-warning official-bottom-warning">DOCUMENTO DEMOSTRATIVO · NO CONTIENE INFORMACIÓN INSTITUCIONAL REAL</p>
       <footer>3 - 3</footer>
