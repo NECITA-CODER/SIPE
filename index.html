@@ -298,9 +298,10 @@
               <label>Asunto<input id="information-subject" type="text" maxlength="120" placeholder="Asunto para conocimiento del personal" required /></label>
               <label>Referencia<input id="information-reference" type="text" maxlength="80" placeholder="Número o referencia del documento" required /></label>
               <label>Fecha<input id="information-date" type="date" required /></label>
-              <label class="file-field">Archivo
+              <label>Contenido para conocimiento<textarea id="information-content" rows="5" maxlength="1200" placeholder="Escriba aquí la disposición o el comunicado que será publicado" required></textarea></label>
+              <label class="file-field">Archivo adjunto (opcional)
                 <input id="information-file" type="file" accept=".pdf,.doc,.docx" />
-                <small>Formatos previstos: PDF, DOC y DOCX.</small>
+                <small>Puede publicar el contenido sin adjuntar un archivo. Formatos admitidos: PDF, DOC y DOCX.</small>
               </label>
               <div class="publication-actions"><button id="information-cancel-edit" class="secondary-light-button" type="button" hidden>Cancelar edición</button><button id="information-submit" class="primary-button" type="submit">Publicar para el personal</button></div>
             </form>
@@ -437,30 +438,20 @@
 
         <article class="panel nominal-block">
           <div class="panel-title"><div><p class="eyebrow">ORGANIZACIÓN</p><h3>Vistas de la relación nominal</h3></div><span id="nominal-total" class="badge green">0 registros</span></div>
-          <div class="nominal-view-controls"><label>Organizar por<select id="nominal-view-mode"><option value="alphabetical">Orden alfabético</option><option value="seniority">Antigüedad</option><option value="section">Armas y especialidades</option><option value="echelon">Escalafón</option><option value="unit">Unidad o dependencia</option></select></label><label>Filtro<select id="nominal-group-filter"><option value="all">Todos</option></select></label><label>Buscar<input id="nominal-search" type="search" placeholder="Nombre o grado"></label><label>Orden<select id="nominal-direction"><option value="asc">Ascendente</option><option value="desc">Descendente</option></select></label></div>
+          <div class="nominal-view-controls"><label>Ordenar la lista por<select id="nominal-view-mode"><option value="alphabetical">Apellidos y nombres</option><option value="rank">Grado</option><option value="seniority">Antigüedad</option><option value="section">Arma o especialidad</option><option value="echelon">Escalafón</option><option value="unit">Unidad o dependencia</option></select></label><label>Filtrar<select id="nominal-group-filter"><option value="all">Mostrar todos</option></select></label><label>Buscar en la lista<input id="nominal-search" type="search" placeholder="Nombre, grado o C.I."></label><label>Orden<select id="nominal-direction"><option value="asc">Ascendente (A–Z)</option><option value="desc">Descendente (Z–A)</option></select></label></div>
           <div id="nominal-tabs" class="nominal-tabs" role="tablist" aria-label="Armas y especialidades" hidden></div>
         </article>
 
         <article class="panel nominal-block">
           <div class="panel-title"><div><p class="eyebrow">REGISTRO NOMINAL</p><h3 id="nominal-section-title">Infantería</h3></div><span class="badge">Datos ficticios</span></div>
-          <form id="nominal-entry-form" class="nominal-entry-form expanded">
-            <label>Grado<input id="nominal-rank" type="text" placeholder="Ej.: Al. 2do. AM. INF." required /></label>
-            <label>Apellidos y nombres<input id="nominal-name" type="text" placeholder="Identidad demostrativa" required /></label>
-            <label>Antigüedad<input id="nominal-seniority" type="number" min="1" value="1" required /></label>
-            <label>Arma o especialidad<select id="nominal-section-input"><option value="infanteria">Infantería</option><option value="caballeria">Caballería</option><option value="artilleria">Artillería</option><option value="ingenieria">Ingeniería</option><option value="comunicaciones">Comunicaciones</option><option value="material_belico">Material Bélico</option><option value="motores">Motores</option><option value="intendencia">Intendencia</option><option value="sanidad">Sanidad</option></select></label>
-            <label>Escalafón<select id="nominal-echelon"><option>Oficiales</option><option>Suboficiales y Sargentos</option><option>Tropa</option><option>Empleados Civiles</option></select></label>
-            <label>Unidad o dependencia<input id="nominal-unit" value="Compañía de Comando" required /></label>
-            <label>Observaciones<input id="nominal-observation" type="text" placeholder="Sin novedad" /></label>
-            <button class="primary-button" type="submit">Agregar personal</button>
-          </form>
           <div class="nominal-table-wrap">
-            <table class="nominal-table"><thead><tr><th>N.º</th><th>Grado</th><th>Apellidos y nombres</th><th>Antigüedad</th><th>Arma/Esp.</th><th>Escalafón</th><th>Dependencia</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody id="nominal-records"></tbody></table>
+            <table class="nominal-table nominal-table-readonly"><thead><tr><th>N.º</th><th>Grado</th><th>Apellidos y nombres</th><th>C.I.</th><th>Ext.</th><th>Antigüedad</th><th>Arma/Esp.</th><th>Escalafón</th><th>Dependencia</th><th>Observaciones</th></tr></thead><tbody id="nominal-records"></tbody></table>
           </div>
         </article>
 
         <div class="nominal-actions no-print">
-          <p>La clasificación y los registros se conservan únicamente en este navegador demostrativo.</p>
-          <div><button id="nominal-print" class="secondary-light-button" type="button">Generar relación nominal PDF</button><button id="nominal-save" class="primary-button" type="button">Guardar relación nominal</button></div>
+          <p>La lista es de consulta. Utilice los controles superiores para ordenarla como en una hoja de cálculo.</p>
+          <div><button id="nominal-reset" class="secondary-light-button" type="button">Restablecer orden</button><button id="nominal-print" class="primary-button" type="button">Vista previa e imprimir</button></div>
         </div>
       </section>
 
