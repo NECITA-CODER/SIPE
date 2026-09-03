@@ -11,7 +11,7 @@ function showView(id, options = {}) {
   if (id !== currentViewId && !options.fromHistory) viewHistory.push(currentViewId);
   currentViewId = id;
   views.forEach(view => view.classList.toggle('active-view', view.id === id));
-  const activeNavigation = id === 'informacion' && informationAccessMode === 'personal' ? 'portal' : ['vacaciones', 'cuadros', 'tropa', 'memorandums', 'p1-funcion', 'p1-registro'].includes(id) || (id === 'informacion' && informationAccessMode === 'p1') ? 'p1' : id;
+  const activeNavigation = id === 'informacion' && informationAccessMode === 'personal' ? 'portal' : ['vacaciones', 'relaciones', 'hoja-vida', 'felicitaciones', 'radiogramas', 'cuadros', 'tropa', 'memorandums', 'p1-funcion', 'p1-registro'].includes(id) || (id === 'informacion' && informationAccessMode === 'p1') ? 'p1' : id;
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
     inicio: 'Inicio',
@@ -19,6 +19,11 @@ function showView(id, options = {}) {
     p1: 'P-1 Personal — SIPE',
     portal: 'Portal del Personal',
     vacaciones: 'Reporte individual de vacaciones',
+    relaciones: 'Relaciones nominales',
+    'hoja-vida': 'Hoja de vida del personal',
+    felicitaciones: 'Memorándums de felicitación',
+    radiogramas: 'Radiogramas',
+    coordinacion: 'Sala de Coordinación',
     informacion: 'Disposiciones generales',
     'p1-funcion': 'Funciones del P-1',
     'p1-registro': 'Registro del P-1',
@@ -49,6 +54,10 @@ document.querySelectorAll('[data-open-p1]').forEach(item => {
   item.addEventListener('keydown', event => { if (event.key === 'Enter') showView('p1'); });
 });
 document.querySelectorAll('[data-open-jpm]').forEach(item => item.addEventListener('click', () => showView('jpm')));
+function sessionRoleText() { return (document.getElementById('session-user-role')?.textContent || '').toLowerCase(); }
+function hasCoordinationAccess() { return /(comandante|jefe de la plana mayor|jpm|administrador|p-[1-5]|g-[1-5])/.test(sessionRoleText()); }
+function canConveneMeeting() { return /(comandante|jefe de la plana mayor|jpm)/.test(sessionRoleText()); }
+document.getElementById('open-coordination-room').addEventListener('click', () => hasCoordinationAccess() ? showView('coordinacion') : notify('Acceso exclusivo del Comandante, JPM y miembros de la Plana Mayor.'));
 document.querySelectorAll('[data-open-portal]').forEach(item => item.addEventListener('click', () => showView('portal')));
 document.querySelectorAll('[data-open-vacations]').forEach(item => item.addEventListener('click', () => openVacationReport('personal')));
 document.querySelectorAll('[data-open-info]').forEach(item => item.addEventListener('click', () => openInformation('personal')));
@@ -337,7 +346,8 @@ const g1Functions = {
     areas: [
       { id: 'vacaciones', title: 'Vacaciones y permisos', description: 'Consulta administrativa, control de saldos y generación del reporte consolidado del personal.' },
       { id: 'relaciones', title: 'Relaciones nominales del personal', description: 'Nóminas organizadas por categoría, grado, dependencia y situación administrativa.' },
-      { id: 'filiaciones', title: 'Filiaciones personales', description: 'Datos de identificación, antecedentes y documentación individual vinculada al legajo.' }
+      { id: 'filiaciones', title: 'Filiaciones personales', description: 'Datos de identificación y documentación individual vinculada al legajo.' },
+      { id: 'hoja-vida', title: 'Hoja de vida del personal', description: 'Registro editable de sanciones, felicitaciones, permisos, licencias y otros antecedentes.' }
     ]
   },
   disciplina: {
@@ -396,6 +406,22 @@ function renderG1Detail(key) {
       openVacationReport('p1');
       return;
     }
+    if (button.dataset.register === 'relaciones') {
+      showView('relaciones');
+      return;
+    }
+    if (button.dataset.register === 'hoja-vida') {
+      showView('hoja-vida');
+      return;
+    }
+    if (button.dataset.register === 'felicitaciones') {
+      showView('felicitaciones');
+      return;
+    }
+    if (button.dataset.register === 'radiogramas') {
+      showView('radiogramas');
+      return;
+    }
     if (button.dataset.register === 'disposiciones') {
       openInformation('p1');
       return;
@@ -415,6 +441,100 @@ function openP1Record(recordTitle, description) {
 }
 
 document.getElementById('p1-register-return').addEventListener('click', () => renderG1Detail(activeP1Function));
+document.querySelectorAll('[data-back-moral]').forEach(button => button.addEventListener('click', () => renderG1Detail('moral')));
+document.querySelectorAll('[data-back-internal]').forEach(button => button.addEventListener('click', () => renderG1Detail('pc')));
+
+const nominalSections = [
+  { id: 'infanteria', numeral: 'I', title: 'Infantería', abbreviation: 'Al. 2do. AM. INF.' },
+  { id: 'caballeria', numeral: 'II', title: 'Caballería', abbreviation: 'Al. 2do. AM. CAB.' },
+  { id: 'artilleria', numeral: 'III', title: 'Artillería', abbreviation: 'Al. 2do. AM. ART.' },
+  { id: 'ingenieria', numeral: 'IV', title: 'Ingeniería', abbreviation: 'Al. 2do. AM. ING.' },
+  { id: 'comunicaciones', numeral: 'V', title: 'Comunicaciones', abbreviation: 'Al. 2do. AM. COM.' },
+  { id: 'material_belico', numeral: 'VI', title: 'Material Bélico', abbreviation: 'Al. 2do. AM. MAT. BEL.' },
+  { id: 'motores', numeral: 'VII', title: 'Motores', abbreviation: 'Al. 2do. AM. MOT.' },
+  { id: 'intendencia', numeral: 'VIII', title: 'Intendencia', abbreviation: 'Al. 2do. AM. INT.' },
+  { id: 'sanidad', numeral: 'IX', title: 'Sanidad', abbreviation: 'Al. 2do. AM. SAN.' }
+];
+const nominalStorageKey = 'simu_demo_relacion_nominal_v1';
+let activeNominalSection = nominalSections[0].id;
+let nominalRecords = [
+  { section: 'infanteria', rank: 'Al. 2do. AM. INF.', name: 'Personal demostrativo 01', observation: 'Sin novedad' },
+  { section: 'caballeria', rank: 'Al. 2do. AM. CAB.', name: 'Personal demostrativo 02', observation: 'Sin novedad' },
+  { section: 'artilleria', rank: 'Al. 2do. AM. ART.', name: 'Personal demostrativo 03', observation: 'Sin novedad' },
+  { section: 'ingenieria', rank: 'Al. 2do. AM. ING.', name: 'Personal demostrativo 04', observation: 'Sin novedad' },
+  { section: 'comunicaciones', rank: 'Al. 2do. AM. COM.', name: 'Personal demostrativo 05', observation: 'Sin novedad' },
+  { section: 'material_belico', rank: 'Al. 2do. AM. MAT. BEL.', name: 'Personal demostrativo 06', observation: 'Sin novedad' },
+  { section: 'motores', rank: 'Al. 2do. AM. MOT.', name: 'Personal demostrativo 07', observation: 'Sin novedad' },
+  { section: 'intendencia', rank: 'Al. 2do. AM. INT.', name: 'Personal demostrativo 08', observation: 'Sin novedad' },
+  { section: 'sanidad', rank: 'Al. 2do. AM. SAN.', name: 'Personal demostrativo 09', observation: 'Sin novedad' }
+];
+
+function nominalSection(id = activeNominalSection) { return nominalSections.find(section => section.id === id) || nominalSections[0]; }
+function saveNominalRecords() { localStorage.setItem(nominalStorageKey, JSON.stringify(nominalRecords)); }
+function renderNominalModule() {
+  const section = nominalSection();
+  setText('nominal-section-title', `${section.numeral}.- ${section.title}`);
+  setText('nominal-total', `${nominalRecords.length} ${nominalRecords.length === 1 ? 'registro' : 'registros'}`);
+  document.getElementById('nominal-rank').placeholder = section.abbreviation;
+  document.getElementById('nominal-tabs').innerHTML = nominalSections.map(item => {
+    const count = nominalRecords.filter(record => record.section === item.id).length;
+    return `<button type="button" class="${item.id === activeNominalSection ? 'active' : ''}" data-nominal-section="${item.id}"><b>${item.numeral}</b><span>${escapeOfficial(item.title)}</span><i>${count}</i></button>`;
+  }).join('');
+  document.querySelectorAll('[data-nominal-section]').forEach(button => button.addEventListener('click', () => { activeNominalSection = button.dataset.nominalSection; renderNominalModule(); }));
+  const records = nominalRecords.filter(record => record.section === activeNominalSection);
+  const tbody = document.getElementById('nominal-records');
+  tbody.innerHTML = records.length ? records.map((record, index) => {
+    const recordIndex = nominalRecords.indexOf(record);
+    return `<tr data-nominal-row="${recordIndex}"><td>${index + 1}</td><td><input data-field="rank" value="${escapeOfficial(record.rank)}" aria-label="Grado" /></td><td><input data-field="name" value="${escapeOfficial(record.name)}" aria-label="Apellidos y nombres" /></td><td><input data-field="observation" value="${escapeOfficial(record.observation || '')}" aria-label="Observaciones" /></td><td><div class="nominal-row-actions"><button type="button" data-save-nominal="${recordIndex}">Guardar</button><button class="nominal-delete" type="button" data-remove-nominal="${recordIndex}" aria-label="Eliminar">×</button></div></td></tr>`;
+  }).join('') : '<tr class="nominal-empty-row"><td colspan="5">NO SE REGISTRÓ PERSONAL EN ESTA ESPECIALIDAD</td></tr>';
+  tbody.querySelectorAll('[data-save-nominal]').forEach(button => button.addEventListener('click', () => {
+    const recordIndex = Number(button.dataset.saveNominal);
+    const row = button.closest('[data-nominal-row]');
+    const value = field => row.querySelector(`[data-field="${field}"]`).value.trim();
+    if (!value('rank') || !value('name')) return notify('Complete el grado y los apellidos y nombres.');
+    nominalRecords[recordIndex] = { ...nominalRecords[recordIndex], rank: value('rank'), name: value('name'), observation: value('observation') };
+    saveNominalRecords();
+    renderNominalModule();
+    notify('Registro nominal actualizado.');
+  }));
+  tbody.querySelectorAll('[data-remove-nominal]').forEach(button => button.addEventListener('click', () => {
+    nominalRecords.splice(Number(button.dataset.removeNominal), 1);
+    saveNominalRecords();
+    renderNominalModule();
+    notify('Registro nominal eliminado.');
+  }));
+}
+
+document.getElementById('nominal-entry-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const rank = document.getElementById('nominal-rank').value.trim();
+  const name = document.getElementById('nominal-name').value.trim();
+  const observation = document.getElementById('nominal-observation').value.trim();
+  if (!rank || !name) return notify('Complete el grado y los apellidos y nombres.');
+  nominalRecords.push({ section: activeNominalSection, rank, name, observation });
+  saveNominalRecords();
+  event.currentTarget.reset();
+  renderNominalModule();
+  notify('Personal agregado a la relación nominal.');
+});
+document.getElementById('nominal-save').addEventListener('click', () => { saveNominalRecords(); notify('Relación nominal guardada como borrador.'); });
+document.querySelectorAll('[data-back-administration]').forEach(button => button.addEventListener('click', () => renderG1Detail('administracion')));
+
+function buildOfficialNominalReport() {
+  const groups = [[0, 1], [2, 3], [4, 5], [6, 7], [8]];
+  const pages = groups.map((indices, pageIndex) => `<article class="nominal-official-page">
+    <header><div><b>SÉPTIMA DIVISIÓN DEL EJÉRCITO</b><b>RIAEROTRANS-18 “VICTORIA”</b><u>BOLIVIA</u></div><strong>SECRETO</strong></header>
+    ${pageIndex === 0 ? '<h1>RELACIÓN NOMINAL DEL PERSONAL POR ARMAS Y ESPECIALIDADES</h1>' : ''}
+    ${indices.map(sectionIndex => { const section = nominalSections[sectionIndex]; const records = nominalRecords.filter(record => record.section === section.id); return `<section><h2>${section.numeral}.- <u>${escapeOfficial(section.title.toUpperCase())}.</u></h2><table><thead><tr><th>N.º</th><th>GRADO</th><th>APELLIDOS Y NOMBRES</th><th>OBS.</th></tr></thead><tbody>${records.length ? records.map((record, index) => `<tr><td>${index + 1}.-</td><td>${escapeOfficial(record.rank)}</td><td>${escapeOfficial(record.name)}</td><td>${escapeOfficial(record.observation || '')}</td></tr>`).join('') : '<tr><td colspan="4">NO SE REGISTRÓ PERSONAL</td></tr>'}</tbody></table></section>`; }).join('')}
+    ${pageIndex === groups.length - 1 ? '<div class="nominal-official-signature"><b>EL COMANDANTE DE LA UNIDAD</b></div><div class="nominal-official-footer-block"><div><u>Autenticación:</u><span>J. PL. MY. ............</span><span>P-1 ............</span></div><div><u>Distribución:</u><span>Original y copias según distribución.</span></div></div>' : ''}
+    <p class="nominal-official-warning">DOCUMENTO DEMOSTRATIVO · IDENTIDADES FICTICIAS</p><footer><b>SECRETO</b><span>${pageIndex + 1} - ${groups.length}</span></footer>
+  </article>`).join('');
+  document.getElementById('official-nominal-report-print').innerHTML = pages;
+}
+document.getElementById('nominal-print').addEventListener('click', () => { buildOfficialNominalReport(); document.body.classList.add('printing-official-nominal-report'); window.setTimeout(() => window.print(), 80); });
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-nominal-report'));
+try { const storedNominal = JSON.parse(localStorage.getItem(nominalStorageKey) || 'null'); if (Array.isArray(storedNominal)) nominalRecords = storedNominal; } catch { localStorage.removeItem(nominalStorageKey); }
+renderNominalModule();
 
 const cuadrosCategoryInputs = [...document.querySelectorAll('[data-cuadros-category]')];
 const cuadrosNoveltyInputs = [...document.querySelectorAll('[data-cuadros-novelty]')];
@@ -890,8 +1010,13 @@ const memorandumForm = document.getElementById('memorandum-form');
 const memoPosition = document.getElementById('memo-position');
 const memoFaultClass = document.getElementById('memo-fault-class');
 const memoFaultSelect = document.getElementById('memo-fault-select');
-const memorandumStorageKey = 'simu_demo_memorandum_v1';
-const memorandumArchiveKey = 'simu_demo_memorandum_archivo_v1';
+const memorandumStorageKey = 'simu_demo_memorandum_v2';
+const memorandumArchiveKey = 'simu_demo_memorandum_archivo_v2';
+const memorandumResetKey = 'simu_demo_memorandums_limpieza_20260903';
+if (!localStorage.getItem(memorandumResetKey)) {
+  ['simu_demo_memorandum_v1', 'simu_demo_memorandum_archivo_v1', memorandumStorageKey, memorandumArchiveKey].forEach(key => localStorage.removeItem(key));
+  localStorage.setItem(memorandumResetKey, 'completada');
+}
 let selectedMemorandumFaults = [];
 
 memoPosition.innerHTML = memorandumPositions.map(position => `<option>${position}</option>`).join('');
@@ -983,12 +1108,12 @@ function buildOfficialMemorandum() {
   const sanctionClause = `al recibo del presente es usted sancionado con ${data.sanctionDuration.toUpperCase()} DE ${data.sanctionType.toUpperCase()}, a cumplir en ${data.sanctionPlace}${data.withoutPrejudice ? ', sin perjuicio de cumplir con sus obligaciones' : ''}`;
   const container = document.getElementById('official-memorandum-print');
   container.innerHTML = `<article class="memo-official-page">
-    <header><div><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></div><h1>MEMORANDUM</h1></header>
-    <section class="memo-official-routing"><div class="memo-official-date"><span>${escapeOfficial(data.place)}, ${memorandumLongDate(data.date)}</span><u>Presente.-</u></div><div class="memo-official-recipient"><b>${escapeOfficial(data.section)} N.º ${escapeOfficial(data.number)}/${escapeOfficial(data.year)}</b><span>Al Señor: ${escapeOfficial(data.rank)}</span><span>${escapeOfficial(data.name)}</span><strong>${escapeOfficial(data.position)}</strong></div></section>
+    <header><div><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></div><h1>MEMORÁNDUM</h1></header>
+    <section class="memo-official-routing"><div class="memo-official-date"><span>${escapeOfficial(data.place)}, ${memorandumLongDate(data.date)}</span><u>Presente.-</u></div><div class="memo-official-recipient"><b>${escapeOfficial(data.section)} N.º ${escapeOfficial(data.number)}/${escapeOfficial(data.year)}</b><span>Al Sr. ${escapeOfficial(data.rank)}</span><span>${escapeOfficial(data.name)}</span><strong>${escapeOfficial(data.position)}</strong></div></section>
     <p>${escapeOfficial(data.treatment)}:</p>
     <p class="memo-official-body">${escapeOfficial(data.facts)} ${escapeOfficial(data.legalBasis)}, ${escapeOfficial(sanctionClause)}, insto a Usted a encaminar su conducta dentro de los principios de disciplina, responsabilidad y honestidad, en estricto cumplimiento a las disposiciones y normas militares.</p>
-    <p>Ante algún presunto agravio deberá realizar la presentación de reclamación en forma escrita mediante solicitud, conforme a Formato-040 del CJ-RGA-223.</p>
-    <p class="memo-official-copy">Copia del presente será remitida al Dpto. I ADM. RR. HH., para ser insertada a su legajo.</p>
+    <p class="memo-official-claim">Ante algún presunto agravio deberá presentar su reclamación en forma escrita mediante solicitud, conforme al Formato-040 del CJ-RGA-223.</p>
+    <p class="memo-official-copy">Copia del presente Memorándum será elevada al Departamento I para ser tomada en cuenta en su legajo personal.</p>
     <blockquote>“EL MAR NOS PERTENECE POR DERECHO,<br>RECUPERARLO ES UN DEBER”</blockquote>
     <div class="memo-official-signature"><strong>${escapeOfficial(data.signerName)}</strong><b>${escapeOfficial(data.signerRank)}</b></div>
     <p class="memo-official-initials">${escapeOfficial(data.initials)}</p>
@@ -1007,3 +1132,78 @@ renderMemorandumFaultOptions();
 renderSelectedMemorandumFaults();
 try { const savedMemo = JSON.parse(localStorage.getItem(memorandumStorageKey) || 'null'); if (savedMemo) applyMemorandumData(savedMemo); } catch { localStorage.removeItem(memorandumStorageKey); }
 renderMemorandumArchive();
+
+// Hoja de vida del personal
+const lifeStorageKey = 'simu_demo_hoja_vida_v1';
+const lifeHistoryKey = 'simu_demo_hoja_vida_historial_v1';
+let lifeRows = [{ type: 'Diversos', day: '', month: '', year: '', detail: 'Registro demostrativo editable', authority: 'P-1' }];
+let lifePhotoData = '';
+const lifeFieldIds = ['life-rank', 'life-lastname', 'life-name', 'life-id'];
+
+function renderLifeRows() {
+  const body = document.getElementById('life-record-rows');
+  body.innerHTML = lifeRows.map((row, index) => `<tr data-life-row="${index}"><td><select data-life-field="type"><option${row.type === 'Sanción' ? ' selected' : ''}>Sanción</option><option${row.type === 'Felicitación' ? ' selected' : ''}>Felicitación</option><option${row.type === 'Diversos' ? ' selected' : ''}>Diversos</option></select></td><td><input data-life-field="day" value="${escapeOfficial(row.day)}"></td><td><input data-life-field="month" value="${escapeOfficial(row.month)}"></td><td><input data-life-field="year" value="${escapeOfficial(row.year)}"></td><td><input data-life-field="detail" value="${escapeOfficial(row.detail)}"></td><td><input data-life-field="authority" value="${escapeOfficial(row.authority)}"></td><td><button type="button" data-life-delete="${index}" aria-label="Eliminar antecedente">×</button></td></tr>`).join('');
+  body.querySelectorAll('[data-life-field]').forEach(input => input.addEventListener('input', () => { const row = Number(input.closest('tr').dataset.lifeRow); lifeRows[row][input.dataset.lifeField] = input.value; }));
+  body.querySelectorAll('[data-life-delete]').forEach(button => button.addEventListener('click', () => { lifeRows.splice(Number(button.dataset.lifeDelete), 1); renderLifeRows(); }));
+}
+
+function collectLifeRecord() {
+  return { fields: Object.fromEntries(lifeFieldIds.map(id => [id, document.getElementById(id).value.trim()])), rows: lifeRows.map(row => ({ ...row })), photo: lifePhotoData, savedAt: new Date().toISOString() };
+}
+function applyLifeRecord(data) { if (!data) return; lifeFieldIds.forEach(id => { if (data.fields?.[id] !== undefined) document.getElementById(id).value = data.fields[id]; }); lifeRows = Array.isArray(data.rows) ? data.rows.map(row => ({ ...row })) : []; lifePhotoData = data.photo || ''; renderLifeRows(); }
+function readLifeHistory() { try { const value = JSON.parse(localStorage.getItem(lifeHistoryKey) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
+function renderLifeHistory() { const history = readLifeHistory(); setText('life-history-count', `${history.length} registros`); document.getElementById('life-history').innerHTML = history.length ? history.map((item, index) => `<article class="history-card"><div><strong>${escapeOfficial(item.fields?.['life-rank'] || '')} ${escapeOfficial(item.fields?.['life-lastname'] || '')}</strong><small>${item.rows?.length || 0} antecedentes</small></div><button type="button" data-life-load="${index}">Editar</button></article>`).join('') : '<p>No existen hojas guardadas.</p>'; document.querySelectorAll('[data-life-load]').forEach(button => button.addEventListener('click', () => applyLifeRecord(history[Number(button.dataset.lifeLoad)]))); }
+function clearOfficialRecordPrints() { document.querySelectorAll('.official-record-print').forEach(item => { item.innerHTML = ''; }); }
+function buildLifePrint() { clearOfficialRecordPrints(); const data = collectLifeRecord(); document.getElementById('official-life-report-print').innerHTML = `<article class="print-document life-print"><header><div><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></div>${data.photo ? `<img class="life-photo-print" src="${data.photo}" alt="Fotografía del titular">` : '<div class="photo-placeholder">FOTOGRAFÍA</div>'}</header><h1>HOJA DE VIDA</h1><table><tr><th>GRADO-ARMA</th><th>APELLIDOS</th><th>NOMBRES</th><th>C.I.</th></tr><tr><td>${escapeOfficial(data.fields['life-rank'])}</td><td>${escapeOfficial(data.fields['life-lastname'])}</td><td>${escapeOfficial(data.fields['life-name'])}</td><td>${escapeOfficial(data.fields['life-id'])}</td></tr></table>${['Sanción','Felicitación','Diversos'].map(type => `<h2>${type === 'Diversos' ? 'DIVERSOS (PERMISOS, LICENCIAS U OTROS)' : `MEMORÁNDUMS DE ${type.toUpperCase()}`}</h2><table><tr><th>DÍA</th><th>MES</th><th>AÑO</th><th>MOTIVO / DETALLE</th><th>IMPUESTO POR</th></tr>${data.rows.filter(row => row.type === type).map(row => `<tr><td>${escapeOfficial(row.day)}</td><td>${escapeOfficial(row.month)}</td><td>${escapeOfficial(row.year)}</td><td>${escapeOfficial(row.detail)}</td><td>${escapeOfficial(row.authority)}</td></tr>`).join('') || '<tr><td colspan="5">SIN REGISTROS</td></tr>'}</table>`).join('')}<footer>DOCUMENTO DEMOSTRATIVO · DATOS FICTICIOS</footer></article>`; }
+document.getElementById('life-photo').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { lifePhotoData = String(reader.result || ''); notify('Fotografía cargada en la hoja de vida.'); }; reader.readAsDataURL(file); });
+document.getElementById('life-add-row').addEventListener('click', () => { lifeRows.push({ type: 'Diversos', day: '', month: '', year: '', detail: '', authority: '' }); renderLifeRows(); });
+document.getElementById('life-record-form').addEventListener('submit', event => { event.preventDefault(); localStorage.setItem(lifeStorageKey, JSON.stringify(collectLifeRecord())); setText('life-status', 'Borrador guardado'); notify('Hoja de vida guardada como borrador.'); });
+document.getElementById('life-archive').addEventListener('click', () => { const history = readLifeHistory(); history.unshift(collectLifeRecord()); localStorage.setItem(lifeHistoryKey, JSON.stringify(history)); renderLifeHistory(); notify('Hoja de vida incorporada al historial demostrativo.'); });
+document.getElementById('life-print').addEventListener('click', () => { buildLifePrint(); document.body.classList.add('printing-official-record'); window.setTimeout(() => window.print(), 80); });
+try { applyLifeRecord(JSON.parse(localStorage.getItem(lifeStorageKey) || 'null')); } catch {}
+renderLifeRows(); renderLifeHistory();
+
+// Memorándums de felicitación
+const congratsStorageKey = 'simu_demo_felicitacion_v1';
+const congratsHistoryKey = 'simu_demo_felicitacion_historial_v1';
+const congratsIds = ['congrats-number','congrats-place','congrats-date','congrats-rank','congrats-name','congrats-position','congrats-reason','congrats-signer','congrats-signer-rank','congrats-initials'];
+document.getElementById('congrats-date').value = new Date().toISOString().slice(0, 10);
+function collectCongrats() { return Object.fromEntries(congratsIds.map(id => [id, document.getElementById(id).value.trim()])); }
+function applyCongrats(data) { if (!data) return; congratsIds.forEach(id => { if (data[id] !== undefined) document.getElementById(id).value = data[id]; }); }
+function readCongratsHistory() { try { const value = JSON.parse(localStorage.getItem(congratsHistoryKey) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
+function renderCongratsHistory() { const history = readCongratsHistory(); setText('congrats-history-count', `${history.length} registros`); document.getElementById('congrats-history').innerHTML = history.length ? history.map((item, index) => `<article class="history-card"><div><strong>${escapeOfficial(item['congrats-number'])}</strong><small>${escapeOfficial(item['congrats-rank'])} ${escapeOfficial(item['congrats-name'])}</small></div><button type="button" data-congrats-load="${index}">Editar</button></article>`).join('') : '<p>No existen memorándums archivados.</p>'; document.querySelectorAll('[data-congrats-load]').forEach(button => button.addEventListener('click', () => applyCongrats(history[Number(button.dataset.congratsLoad)]))); }
+function buildCongratsPrint() { clearOfficialRecordPrints(); const data = collectCongrats(); document.getElementById('official-congratulations-print').innerHTML = `<article class="print-document memo-print"><header><div><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></div><h1>MEMORÁNDUM</h1></header><section class="print-recipient"><strong>${escapeOfficial(data['congrats-number'])}</strong><span>Al Sr. ${escapeOfficial(data['congrats-rank'])}</span><span>${escapeOfficial(data['congrats-name'])}</span><b>${escapeOfficial(data['congrats-position'])}</b></section><div class="print-date">${escapeOfficial(data['congrats-place'])}, ${memorandumLongDate(data['congrats-date'])} <u>Presente.-</u></div><p>Señor(a):</p><p class="justified">${escapeOfficial(data['congrats-reason'])} Tengo a bien hacer llegar a Usted mis más sinceras FELICITACIONES, exhortándole a continuar con el mismo profesionalismo y dedicación para bien de nuestra Institución.</p><p class="justified">Copia del presente memorándum será incorporada a su legajo personal.</p><p class="center">Con este motivo saludo a Usted atentamente.</p><div class="print-signature"><strong>${escapeOfficial(data['congrats-signer'])}</strong><b>${escapeOfficial(data['congrats-signer-rank'])}</b></div><small>${escapeOfficial(data['congrats-initials'])}</small></article>`; }
+document.getElementById('congratulations-form').addEventListener('submit', event => { event.preventDefault(); localStorage.setItem(congratsStorageKey, JSON.stringify(collectCongrats())); notify('Memorándum de felicitación guardado como borrador.'); });
+document.getElementById('congrats-archive').addEventListener('click', () => { const history = readCongratsHistory(); history.unshift(collectCongrats()); localStorage.setItem(congratsHistoryKey, JSON.stringify(history)); renderCongratsHistory(); notify('Memorándum de felicitación archivado.'); });
+document.getElementById('congrats-print').addEventListener('click', () => { buildCongratsPrint(); document.body.classList.add('printing-official-record'); window.setTimeout(() => window.print(), 80); });
+try { applyCongrats(JSON.parse(localStorage.getItem(congratsStorageKey) || 'null')); } catch {}
+renderCongratsHistory();
+
+// Radiogramas recibidos y expedidos
+const receivedRadiogramKey = 'simu_demo_radiogramas_recibidos_v1';
+const sentRadiogramKey = 'simu_demo_radiograma_expedido_v1';
+const sentRadiogramHistoryKey = 'simu_demo_radiogramas_expedidos_historial_v1';
+const sentIds = ['sent-datetime','sent-to','sent-to-place','sent-from','sent-from-place','sent-number','sent-body','sent-signer','sent-signer-rank','sent-initials'];
+document.querySelectorAll('[data-radiogram-tab]').forEach(button => button.addEventListener('click', () => { const received = button.dataset.radiogramTab === 'received'; document.getElementById('radiogram-received-panel').hidden = !received; document.getElementById('radiogram-sent-panel').hidden = received; document.querySelectorAll('[data-radiogram-tab]').forEach(item => item.classList.toggle('active', item === button)); }));
+function readList(key) { try { const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
+function renderReceivedRadiograms() { const rows = readList(receivedRadiogramKey); document.getElementById('received-radiogram-history').innerHTML = rows.length ? rows.map((item, index) => `<article class="history-card"><div><strong>${escapeOfficial(item.number)} · ${escapeOfficial(item.subject)}</strong><small>${escapeOfficial(item.origin)} · ${escapeOfficial(item.fileName)}</small></div><button type="button" data-received-delete="${index}">Retirar</button></article>`).join('') : '<p>No existen radiogramas recibidos registrados.</p>'; document.querySelectorAll('[data-received-delete]').forEach(button => button.addEventListener('click', () => { const rows = readList(receivedRadiogramKey); rows.splice(Number(button.dataset.receivedDelete), 1); localStorage.setItem(receivedRadiogramKey, JSON.stringify(rows)); renderReceivedRadiograms(); })); }
+document.getElementById('received-radiogram-form').addEventListener('submit', event => { event.preventDefault(); const file = document.getElementById('received-file').files[0]; const rows = readList(receivedRadiogramKey); rows.unshift({ number: document.getElementById('received-number').value, origin: document.getElementById('received-origin').value, datetime: document.getElementById('received-datetime').value, reference: document.getElementById('received-reference').value, subject: document.getElementById('received-subject').value, fileName: file?.name || 'Sin archivo' }); localStorage.setItem(receivedRadiogramKey, JSON.stringify(rows)); event.target.reset(); renderReceivedRadiograms(); notify('Radiograma recibido registrado.'); });
+function collectSentRadiogram() { return Object.fromEntries(sentIds.map(id => [id, document.getElementById(id).value.trim()])); }
+function applySentRadiogram(data) { if (!data) return; sentIds.forEach(id => { if (data[id] !== undefined) document.getElementById(id).value = data[id]; }); }
+function renderSentRadiograms() { const rows = readList(sentRadiogramHistoryKey); document.getElementById('sent-radiogram-history').innerHTML = rows.length ? rows.map((item, index) => `<article class="history-card"><div><strong>${escapeOfficial(item['sent-number'])}</strong><small>${escapeOfficial(item['sent-to'])} · ${escapeOfficial(item['sent-datetime'])}</small></div><button type="button" data-sent-load="${index}">Editar</button></article>`).join('') : '<p>No existen radiogramas expedidos archivados.</p>'; document.querySelectorAll('[data-sent-load]').forEach(button => button.addEventListener('click', () => applySentRadiogram(rows[Number(button.dataset.sentLoad)]))); }
+function buildRadiogramPrint() { clearOfficialRecordPrints(); const data = collectSentRadiogram(); document.getElementById('official-radiogram-print').innerHTML = `<article class="print-document radiogram-print"><header><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></header><h1>RADIOGRAMA EXPEDIDO</h1><p class="radiogram-time">${escapeOfficial(data['sent-datetime'])}</p><div class="radiogram-routing"><b>AL</b><span>:</span><strong>${escapeOfficial(data['sent-to'])}</strong><span>${escapeOfficial(data['sent-to-place'])}</span><b>DEL</b><span>:</span><strong>${escapeOfficial(data['sent-from'])}</strong><span>${escapeOfficial(data['sent-from-place'])}</span></div><h2>${escapeOfficial(data['sent-number'])}</h2><p class="radiogram-body">${escapeOfficial(data['sent-body'])}</p><div class="print-signature"><strong>${escapeOfficial(data['sent-signer'])}</strong><b>${escapeOfficial(data['sent-signer-rank'])}</b></div><small>${escapeOfficial(data['sent-initials'])}</small></article>`; }
+document.getElementById('sent-radiogram-form').addEventListener('submit', event => { event.preventDefault(); localStorage.setItem(sentRadiogramKey, JSON.stringify(collectSentRadiogram())); setText('sent-radiogram-status', 'Borrador guardado'); notify('Radiograma expedido guardado como borrador.'); });
+document.getElementById('sent-radiogram-archive').addEventListener('click', () => { const rows = readList(sentRadiogramHistoryKey); rows.unshift(collectSentRadiogram()); localStorage.setItem(sentRadiogramHistoryKey, JSON.stringify(rows)); renderSentRadiograms(); notify('Radiograma expedido archivado.'); });
+document.getElementById('sent-radiogram-print').addEventListener('click', () => { buildRadiogramPrint(); document.body.classList.add('printing-official-record'); window.setTimeout(() => window.print(), 80); });
+try { applySentRadiogram(JSON.parse(localStorage.getItem(sentRadiogramKey) || 'null')); } catch {}
+renderReceivedRadiograms(); renderSentRadiograms();
+
+// Sala de Coordinación
+const coordinationKey = 'simu_demo_sala_coordinacion_v1';
+document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16);
+function renderCoordinationHistory() { const rows = readList(coordinationKey); setText('coordination-count', `${rows.length} registros`); document.getElementById('coordination-history').innerHTML = rows.length ? rows.map((item, index) => `<article class="coordination-thread"><div><span>${escapeOfficial(item.origin)} → ${escapeOfficial(item.destination)}</span><strong>${escapeOfficial(item.subject)}</strong><p>${escapeOfficial(item.message)}</p>${item.response ? `<p><b>Respuesta:</b> ${escapeOfficial(item.response)}</p>` : ''}<small>${escapeOfficial(item.datetime)} · ${escapeOfficial(item.priority)} · ${escapeOfficial(item.fileName || 'Sin adjunto')}</small></div><div class="coordination-controls"><label>Estado<select data-coord-status="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}><option${item.status === 'Pendiente' ? ' selected' : ''}>Pendiente</option><option${item.status === 'Recibida' ? ' selected' : ''}>Recibida</option><option${item.status === 'Respondida' ? ' selected' : ''}>Respondida</option><option${item.status === 'Cerrada' ? ' selected' : ''}>Cerrada</option></select></label><label>Respuesta<textarea data-coord-response="${index}" rows="2"${item.status === 'Cerrada' ? ' disabled' : ''}>${escapeOfficial(item.response || '')}</textarea></label><button type="button" data-coord-save="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}>Guardar respuesta</button></div></article>`).join('') : '<p>No existen coordinaciones registradas.</p>'; document.querySelectorAll('[data-coord-status]').forEach(select => select.addEventListener('change', () => { const rows = readList(coordinationKey); rows[Number(select.dataset.coordStatus)].status = select.value; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); })); document.querySelectorAll('[data-coord-save]').forEach(button => button.addEventListener('click', () => { const rows = readList(coordinationKey); const index = Number(button.dataset.coordSave); rows[index].response = document.querySelector(`[data-coord-response="${index}"]`).value.trim(); if (rows[index].response) rows[index].status = 'Respondida'; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); notify('Respuesta registrada.'); })); }
+document.getElementById('coordination-form').addEventListener('submit', event => { event.preventDefault(); const origin = document.getElementById('coord-origin').value; const destination = document.getElementById('coord-destination').value; if (origin === destination) return notify('Seleccione dos campos de la conducción diferentes.'); const file = document.getElementById('coord-file').files[0]; const rows = readList(coordinationKey); rows.unshift({ origin, destination, priority: document.getElementById('coord-priority').value, subject: document.getElementById('coord-subject').value, datetime: document.getElementById('coord-datetime').value, message: document.getElementById('coord-message').value, fileName: file?.name || '', status: 'Pendiente' }); localStorage.setItem(coordinationKey, JSON.stringify(rows)); event.target.reset(); document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16); renderCoordinationHistory(); notify('Coordinación registrada con trazabilidad.'); });
+document.getElementById('meeting-create').addEventListener('click', () => { if (!canConveneMeeting()) return notify('Solo el Comandante o el Jefe de la Plana Mayor puede convocar la reunión general.'); const subject = document.getElementById('meeting-subject').value.trim(); const link = document.getElementById('meeting-link').value.trim(); if (!subject || !/^https:\/\/meet\.google\.com\//i.test(link)) return notify('Ingrese el asunto y un enlace válido de Google Meet.'); notify('Reunión general registrada para el Comandante, JPM y P-1 a P-5.'); window.open(link, '_blank', 'noopener'); });
+renderCoordinationHistory();
+
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-record'));
