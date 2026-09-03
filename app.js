@@ -48,7 +48,7 @@ document.querySelectorAll('[data-open-p1]').forEach(item => {
 });
 document.querySelectorAll('[data-open-jpm]').forEach(item => item.addEventListener('click', () => showView('jpm')));
 document.querySelectorAll('[data-open-portal]').forEach(item => item.addEventListener('click', () => showView('portal')));
-document.querySelectorAll('[data-open-vacations]').forEach(item => item.addEventListener('click', () => showView('vacaciones')));
+document.querySelectorAll('[data-open-vacations]').forEach(item => item.addEventListener('click', () => openVacationReport('personal')));
 document.querySelectorAll('[data-open-info]').forEach(item => item.addEventListener('click', () => showView('informacion')));
 document.querySelectorAll('.locked, .chief-card:not(.operative)').forEach(item => item.addEventListener('click', () => notify(`${item.dataset.field}: módulo previsto para desarrollo futuro.`)));
 document.querySelectorAll('[data-demo]').forEach(item => item.addEventListener('click', () => notify('Esta función se habilitará en la siguiente etapa del SIPE.')));
@@ -195,6 +195,45 @@ function renderProfile(profileId) {
 document.getElementById('profile-select').addEventListener('change', event => renderProfile(event.target.value));
 renderProfile('001');
 
+let vacationAccessMode = 'personal';
+
+function openVacationReport(mode = 'personal') {
+  vacationAccessMode = mode;
+  const isP1 = mode === 'p1';
+  const returnButton = document.getElementById('vacation-return');
+  returnButton.textContent = isP1 ? 'Volver al P-1' : 'Volver al portal';
+  returnButton.onclick = () => showView(isP1 ? 'p1' : 'portal');
+  document.getElementById('vacation-print').textContent = isP1 ? 'Imprimir reporte consolidado' : 'Imprimir reporte individual';
+  showView('vacaciones');
+}
+
+function vacationBalance(profile) {
+  return profile.annual - profile.collective - profile.used - profile.permits + profile.compensation;
+}
+
+function vacationReportDate() {
+  return new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date());
+}
+
+function buildVacationReport() {
+  const container = document.getElementById('official-vacation-report-print');
+  const profile = personnelProfiles[document.getElementById('profile-select').value];
+  const movements = profile.movements.map(row => `<tr>${row.map(cell => `<td>${escapeOfficial(cell)}</td>`).join('')}</tr>`).join('');
+  const consolidated = Object.values(personnelProfiles).map((item, index) => `<tr><td>${index + 1}</td><td>${escapeOfficial(item.name)}</td><td>${escapeOfficial(item.unit)}</td><td>${item.annual}</td><td>${item.used}</td><td>${item.permits}</td><td>${vacationBalance(item)}</td><td>${escapeOfficial(item.scheduleState)}</td></tr>`).join('');
+  const content = vacationAccessMode === 'p1'
+    ? `<h2>REPORTE CONSOLIDADO DE VACACIONES Y PERMISOS</h2><p class="vacation-report-scope">Administración del P-1 · Datos demostrativos</p><table><thead><tr><th>N.º</th><th>Personal</th><th>Dependencia</th><th>Derecho</th><th>Utilizado</th><th>Permisos</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>${consolidated}</tbody></table>`
+    : `<h2>REPORTE INDIVIDUAL DE VACACIONES</h2><p class="vacation-report-scope">Consulta autorizada del titular · Datos demostrativos</p><div class="vacation-report-person"><p><b>Personal:</b> ${escapeOfficial(profile.name)}</p><p><b>Dependencia:</b> ${escapeOfficial(profile.unit)}</p><p><b>Periodo programado:</b> ${escapeOfficial(profile.period)}</p><p><b>Estado:</b> ${escapeOfficial(profile.scheduleState)}</p></div><table><thead><tr><th>Derecho anual</th><th>Reserva colectiva</th><th>Utilizado</th><th>Permisos</th><th>Compensación</th><th>Saldo</th></tr></thead><tbody><tr><td>${profile.annual}</td><td>${profile.collective}</td><td>${profile.used}</td><td>${profile.permits}</td><td>${profile.compensation}</td><td>${vacationBalance(profile)}</td></tr></tbody></table><h3>HISTORIAL DE MOVIMIENTOS</h3><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Días</th><th>Efecto</th><th>Estado</th></tr></thead><tbody>${movements}</tbody></table>`;
+  container.innerHTML = `<article class="vacation-official-page"><header><div><strong>UNIDAD DEMOSTRATIVA</strong><strong>SECCIÓN I - PERSONAL</strong><u>BOLIVIA</u></div><div><b>SIMU</b><span>Fecha: ${vacationReportDate()}</span></div></header>${content}<div class="vacation-report-signatures"><div>RESPONSABLE P-1</div><div>INTERESADO</div></div><p class="vacation-report-warning">DOCUMENTO DEMOSTRATIVO - NO CONTIENE DATOS INSTITUCIONALES REALES</p></article>`;
+}
+
+document.getElementById('vacation-print').addEventListener('click', () => {
+  buildVacationReport();
+  document.body.classList.add('printing-official-vacation-report');
+  window.setTimeout(() => window.print(), 80);
+});
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-vacation-report'));
+document.getElementById('vacation-return').onclick = () => showView('portal');
+
 const g1Functions = {
   efectivos: {
     number: '01', title: 'Mantenimiento de efectivos', purpose: 'Concentrar y actualizar los partes del personal de la unidad.',
@@ -206,6 +245,7 @@ const g1Functions = {
   administracion: {
     number: '02', title: 'Administración del personal', purpose: 'Organizar los registros nominales y la documentación individual del personal.',
     areas: [
+      { id: 'vacaciones', title: 'Vacaciones y permisos', description: 'Consulta administrativa, control de saldos y generación del reporte consolidado del personal.' },
       ['Relaciones nominales del personal', 'Nóminas organizadas por categoría, grado, dependencia y situación administrativa.'],
       ['Filiaciones personales', 'Datos de identificación, antecedentes y documentación individual vinculada al legajo.']
     ]
@@ -261,6 +301,10 @@ function renderG1Detail(key) {
     }
     if (button.dataset.register === 'memorandums') {
       showView('memorandums');
+      return;
+    }
+    if (button.dataset.register === 'vacaciones') {
+      openVacationReport('p1');
       return;
     }
     notify(`${button.dataset.registerTitle}: registro preparado para la siguiente fase.`);
