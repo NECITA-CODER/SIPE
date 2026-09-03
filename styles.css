@@ -108,3 +108,16 @@ body[data-user-role="g1"] .publication-panel[hidden],body[data-user-role="auxili
 .troop-table td:last-child .troop-save-button{border:0;background:#e6f0e8;color:var(--green2);border-radius:5px;width:auto;height:28px;padding:0 8px;cursor:pointer;font-size:8px;font-weight:800}
 .troop-table td:last-child .troop-delete-button{border:0;background:#efe6e2;color:var(--red);border-radius:50%;width:24px;height:24px;cursor:pointer;font-weight:800}
 .control-list>.p1-register-card{grid-column:1!important;grid-row:auto!important}
+.p1-register-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.p1-register-grid>.p1-register-card{grid-template-columns:42px 1fr!important;grid-template-rows:1fr auto!important;align-items:start!important;min-height:170px;padding:21px!important;border-radius:12px!important;background:#fff!important;box-shadow:0 8px 24px rgba(20,35,27,.06)}
+.p1-register-number{width:38px;height:38px;display:grid!important;place-items:center;border-radius:8px;background:var(--green);color:#e6d596;font:700 15px Georgia,serif}
+.p1-register-copy{min-width:0}
+.p1-register-card .p1-register-copy strong{font-size:18px;line-height:1.2}
+.p1-register-card .p1-register-copy small{font-size:11px;line-height:1.55;margin-top:10px}
+.p1-register-grid>.p1-register-card>b{grid-column:1/-1;justify-self:end;align-self:end;margin-top:12px}
+@media(max-width:800px){.p1-register-grid{grid-template-columns:1fr}.p1-register-grid>.p1-register-card{min-height:145px}}
+.official-signature{left:50%;right:auto;bottom:34mm;width:92mm;transform:translateX(-50%);justify-items:center;line-height:1.25}
+.official-signature-space{min-height:17mm;display:flex;align-items:flex-end;font-size:8pt;color:#444}
+.official-signature-line{display:block;width:72mm;border-top:1pt solid #000;margin:2mm 0 1.5mm}
+.official-signature strong{margin:0;font-size:10pt}
+.official-signature b{margin-top:1mm;font-size:9.5pt}
