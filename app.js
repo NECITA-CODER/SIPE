@@ -15,6 +15,7 @@ function showView(id, options = {}) {
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
     inicio: 'Inicio',
+    comandante: 'Comandante de la Unidad',
     jpm: 'Jefe de la Plana Mayor',
     p1: 'P-1 Personal — SIPE',
     portal: 'Portal del Personal',
@@ -54,10 +55,22 @@ document.querySelectorAll('[data-open-p1]').forEach(item => {
   item.addEventListener('keydown', event => { if (event.key === 'Enter') showView('p1'); });
 });
 document.querySelectorAll('[data-open-jpm]').forEach(item => item.addEventListener('click', () => showView('jpm')));
+document.querySelectorAll('[data-open-commander]').forEach(item => item.addEventListener('click', () => showView('comandante')));
 function sessionRoleText() { return (document.getElementById('session-user-role')?.textContent || '').toLowerCase(); }
 function hasCoordinationAccess() { return /(comandante|jefe de la plana mayor|jpm|administrador|p-[1-5]|g-[1-5])/.test(sessionRoleText()); }
-function canConveneMeeting() { return /(comandante|jefe de la plana mayor|jpm)/.test(sessionRoleText()); }
-document.getElementById('open-coordination-room').addEventListener('click', () => hasCoordinationAccess() ? showView('coordinacion') : notify('Acceso exclusivo del Comandante, JPM y miembros de la Plana Mayor.'));
+function canConveneMeeting() { return ['Comandante', 'Jefe de la Plana Mayor'].includes(currentCoordinationOrigin); }
+const coordinationParticipants = ['Comandante', 'Jefe de la Plana Mayor', 'P-1 Personal', 'P-2 Inteligencia', 'P-3 Operaciones', 'P-4 Logística', 'P-5 Asuntos Civiles'];
+let currentCoordinationOrigin = 'P-1 Personal';
+function openCoordinationRoom(origin) {
+  currentCoordinationOrigin = coordinationParticipants.includes(origin) ? origin : 'P-1 Personal';
+  const originSelect = document.getElementById('coord-origin');
+  const destinationSelect = document.getElementById('coord-destination');
+  originSelect.innerHTML = `<option>${currentCoordinationOrigin}</option>`;
+  destinationSelect.innerHTML = coordinationParticipants.filter(item => item !== currentCoordinationOrigin).map(item => `<option>${item}</option>`).join('');
+  showView('coordinacion');
+}
+document.querySelectorAll('[data-open-coordination]').forEach(item => item.addEventListener('click', () => openCoordinationRoom(item.dataset.coordinationOrigin)));
+document.getElementById('coordination-return').addEventListener('click', () => goBackView(currentCoordinationOrigin === 'Comandante' ? 'comandante' : currentCoordinationOrigin === 'Jefe de la Plana Mayor' ? 'jpm' : currentCoordinationOrigin === 'P-1 Personal' ? 'p1' : 'inicio'));
 document.querySelectorAll('[data-open-portal]').forEach(item => item.addEventListener('click', () => showView('portal')));
 document.querySelectorAll('[data-open-vacations]').forEach(item => item.addEventListener('click', () => openVacationReport('personal')));
 document.querySelectorAll('[data-open-info]').forEach(item => item.addEventListener('click', () => openInformation('personal')));
@@ -109,6 +122,7 @@ function renderInformationPublications() {
     editingInformationIndex = Number(button.dataset.editInformation);
     const item = publications[editingInformationIndex];
     document.getElementById('information-type').value = item.type;
+    document.getElementById('information-requirement').value = item.requirement || 'knowledge';
     document.getElementById('information-subject').value = item.subject;
     document.getElementById('information-reference').value = item.reference;
     document.getElementById('information-date').value = item.date;
@@ -142,6 +156,7 @@ generalInformationForm.addEventListener('submit', event => {
   const previous = editingInformationIndex === null ? null : publications[editingInformationIndex];
   const publication = {
     type: document.getElementById('information-type').value,
+    requirement: document.getElementById('information-requirement').value,
     subject: document.getElementById('information-subject').value.trim(),
     reference: document.getElementById('information-reference').value.trim(),
     date: document.getElementById('information-date').value,
@@ -151,6 +166,7 @@ generalInformationForm.addEventListener('submit', event => {
   else publications[editingInformationIndex] = publication;
   localStorage.setItem(informationStorageKey, JSON.stringify(publications));
   const wasEditing = editingInformationIndex !== null;
+  if (!wasEditing) createInternalAlert({ source: 'P-1 Personal', audience: 'Todo el personal', type: publication.type, subject: publication.subject, priority: 'Informativa', requirement: publication.requirement, reference: publication.reference });
   resetInformationForm();
   renderInformationPublications();
   notify(wasEditing ? 'La disposición fue actualizada.' : 'Disposición publicada en el Portal del Personal.');
@@ -1202,8 +1218,63 @@ renderReceivedRadiograms(); renderSentRadiograms();
 const coordinationKey = 'simu_demo_sala_coordinacion_v1';
 document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16);
 function renderCoordinationHistory() { const rows = readList(coordinationKey); setText('coordination-count', `${rows.length} registros`); document.getElementById('coordination-history').innerHTML = rows.length ? rows.map((item, index) => `<article class="coordination-thread"><div><span>${escapeOfficial(item.origin)} → ${escapeOfficial(item.destination)}</span><strong>${escapeOfficial(item.subject)}</strong><p>${escapeOfficial(item.message)}</p>${item.response ? `<p><b>Respuesta:</b> ${escapeOfficial(item.response)}</p>` : ''}<small>${escapeOfficial(item.datetime)} · ${escapeOfficial(item.priority)} · ${escapeOfficial(item.fileName || 'Sin adjunto')}</small></div><div class="coordination-controls"><label>Estado<select data-coord-status="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}><option${item.status === 'Pendiente' ? ' selected' : ''}>Pendiente</option><option${item.status === 'Recibida' ? ' selected' : ''}>Recibida</option><option${item.status === 'Respondida' ? ' selected' : ''}>Respondida</option><option${item.status === 'Cerrada' ? ' selected' : ''}>Cerrada</option></select></label><label>Respuesta<textarea data-coord-response="${index}" rows="2"${item.status === 'Cerrada' ? ' disabled' : ''}>${escapeOfficial(item.response || '')}</textarea></label><button type="button" data-coord-save="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}>Guardar respuesta</button></div></article>`).join('') : '<p>No existen coordinaciones registradas.</p>'; document.querySelectorAll('[data-coord-status]').forEach(select => select.addEventListener('change', () => { const rows = readList(coordinationKey); rows[Number(select.dataset.coordStatus)].status = select.value; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); })); document.querySelectorAll('[data-coord-save]').forEach(button => button.addEventListener('click', () => { const rows = readList(coordinationKey); const index = Number(button.dataset.coordSave); rows[index].response = document.querySelector(`[data-coord-response="${index}"]`).value.trim(); if (rows[index].response) rows[index].status = 'Respondida'; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); notify('Respuesta registrada.'); })); }
-document.getElementById('coordination-form').addEventListener('submit', event => { event.preventDefault(); const origin = document.getElementById('coord-origin').value; const destination = document.getElementById('coord-destination').value; if (origin === destination) return notify('Seleccione dos campos de la conducción diferentes.'); const file = document.getElementById('coord-file').files[0]; const rows = readList(coordinationKey); rows.unshift({ origin, destination, priority: document.getElementById('coord-priority').value, subject: document.getElementById('coord-subject').value, datetime: document.getElementById('coord-datetime').value, message: document.getElementById('coord-message').value, fileName: file?.name || '', status: 'Pendiente' }); localStorage.setItem(coordinationKey, JSON.stringify(rows)); event.target.reset(); document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16); renderCoordinationHistory(); notify('Coordinación registrada con trazabilidad.'); });
-document.getElementById('meeting-create').addEventListener('click', () => { if (!canConveneMeeting()) return notify('Solo el Comandante o el Jefe de la Plana Mayor puede convocar la reunión general.'); const subject = document.getElementById('meeting-subject').value.trim(); const link = document.getElementById('meeting-link').value.trim(); if (!subject || !/^https:\/\/meet\.google\.com\//i.test(link)) return notify('Ingrese el asunto y un enlace válido de Google Meet.'); notify('Reunión general registrada para el Comandante, JPM y P-1 a P-5.'); window.open(link, '_blank', 'noopener'); });
+document.getElementById('coordination-form').addEventListener('submit', event => { event.preventDefault(); const origin = document.getElementById('coord-origin').value; const destination = document.getElementById('coord-destination').value; if (origin === destination) return notify('Seleccione un destinatario diferente al origen.'); const file = document.getElementById('coord-file').files[0]; const priority = document.getElementById('coord-priority').value; const subject = document.getElementById('coord-subject').value; const requirement = document.getElementById('coord-requirement').value; const documentType = document.getElementById('coord-document-type').value; const rows = readList(coordinationKey); rows.unshift({ origin, destination, priority, subject, requirement, documentType, datetime: document.getElementById('coord-datetime').value, message: document.getElementById('coord-message').value, fileName: file?.name || '', status: 'Pendiente' }); localStorage.setItem(coordinationKey, JSON.stringify(rows)); createInternalAlert({ source: origin, audience: destination, type: documentType, subject, priority, requirement, reference: file?.name || 'Sin adjunto' }); event.target.reset(); document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16); renderCoordinationHistory(); notify('Coordinación registrada y alerta enviada al destinatario.'); });
+document.getElementById('meeting-create').addEventListener('click', () => { if (!canConveneMeeting()) return notify('Solo el Comandante o el Jefe de la Plana Mayor puede convocar la reunión general.'); const subject = document.getElementById('meeting-subject').value.trim(); const link = document.getElementById('meeting-link').value.trim(); if (!subject || !/^https:\/\/meet\.google\.com\//i.test(link)) return notify('Ingrese el asunto y un enlace válido de Google Meet.'); coordinationParticipants.filter(item => item !== currentCoordinationOrigin).forEach(audience => createInternalAlert({ source: currentCoordinationOrigin, audience, type: 'Reunión general', subject, priority: 'Inmediata', requirement: 'knowledge', reference: link })); notify('Reunión general registrada y alertas enviadas a los participantes.'); window.open(link, '_blank', 'noopener'); });
 renderCoordinationHistory();
+
+// Alertas internas, constancia de conocimiento y conformidad
+const alertsStorageKey = 'simu_demo_alertas_v1';
+let activeAlertFilter = 'pending';
+function readInternalAlerts() { try { const value = JSON.parse(localStorage.getItem(alertsStorageKey) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
+function writeInternalAlerts(alerts) { localStorage.setItem(alertsStorageKey, JSON.stringify(alerts)); renderInternalAlerts(); }
+function currentAlertIdentity() {
+  if (currentViewId === 'coordinacion') return currentCoordinationOrigin;
+  const role = sessionRoleText();
+  if (/comandante/.test(role)) return 'Comandante';
+  if (/jefe de la plana mayor|jpm/.test(role)) return 'Jefe de la Plana Mayor';
+  if (/p-?1|g-?1|administrador/.test(role)) return 'P-1 Personal';
+  if (/p-?2|g-?2/.test(role)) return 'P-2 Inteligencia';
+  if (/p-?3|g-?3/.test(role)) return 'P-3 Operaciones';
+  if (/p-?4|g-?4/.test(role)) return 'P-4 Logística';
+  if (/p-?5|g-?5/.test(role)) return 'P-5 Asuntos Civiles';
+  return 'Personal de la Unidad';
+}
+function alertUserLabel() { const name = document.getElementById('session-user-name')?.textContent?.trim(); return name && name !== 'Usuario autorizado' ? `${name} · ${currentAlertIdentity()}` : currentAlertIdentity(); }
+function createInternalAlert({ source, audience, type, subject, priority = 'Informativa', requirement = 'knowledge', reference = '' }) {
+  const alerts = readInternalAlerts();
+  alerts.unshift({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, source, audience, type, subject, priority, requirement, reference, createdAt: new Date().toISOString(), acknowledgements: [] });
+  localStorage.setItem(alertsStorageKey, JSON.stringify(alerts));
+  renderInternalAlerts();
+}
+function eligibleAlert(alert) { const identity = currentAlertIdentity(); return alert.audience === identity || alert.audience === 'Todo el personal'; }
+function acknowledgementFor(alert) { const user = alertUserLabel(); return (alert.acknowledgements || []).find(item => item.user === user); }
+function updateAlertAcknowledgement(id, updates) {
+  const alerts = readInternalAlerts(); const alert = alerts.find(item => item.id === id); if (!alert) return;
+  alert.acknowledgements ||= []; const user = alertUserLabel(); let ack = alert.acknowledgements.find(item => item.user === user);
+  if (!ack) { ack = { user, receivedAt: new Date().toISOString() }; alert.acknowledgements.push(ack); }
+  Object.assign(ack, updates); writeInternalAlerts(alerts);
+}
+function alertStatus(alert) { const ack = acknowledgementFor(alert); if (!ack) return 'Pendiente'; if (ack.observedAt) return 'Observado'; if (ack.conformityAt) return 'Conforme'; if (ack.knowledgeAt) return 'Conocimiento confirmado'; if (ack.viewedAt) return 'Visualizado'; return 'Recibido'; }
+function renderAlertTracking(alerts) {
+  const source = currentAlertIdentity(); const own = alerts.filter(item => item.source === source);
+  return own.length ? own.map(alert => `<article class="alert-tracking-card"><div><span>${escapeOfficial(alert.type)} · ${escapeOfficial(alert.audience)}</span><strong>${escapeOfficial(alert.subject)}</strong></div><div class="alert-tracking-table"><span>Destinatario</span><span>Estado</span><span>Fecha y hora</span>${(alert.acknowledgements || []).map(ack => `<b>${escapeOfficial(ack.user)}</b><b>${ack.observedAt ? 'Observado' : ack.conformityAt ? 'Conforme' : ack.knowledgeAt ? 'Conocimiento confirmado' : ack.viewedAt ? 'Visualizado' : 'Recibido'}</b><b>${escapeOfficial(ack.observedAt || ack.conformityAt || ack.knowledgeAt || ack.viewedAt || ack.receivedAt || '')}</b>${ack.note ? `<small>Observación: ${escapeOfficial(ack.note)}</small>` : ''}`).join('') || `<b>${escapeOfficial(alert.audience)}</b><b>Pendiente</b><b>—</b>`}</div></article>`).join('') : '<p class="alerts-empty">No existen publicaciones emitidas para seguimiento desde este nivel.</p>';
+}
+function renderInternalAlerts() {
+  const alerts = readInternalAlerts(); const eligible = alerts.filter(eligibleAlert); const pending = eligible.filter(alert => !acknowledgementFor(alert)?.knowledgeAt);
+  setText('alerts-count', String(pending.length)); document.getElementById('alerts-button').classList.toggle('has-alerts', pending.length > 0);
+  const container = document.getElementById('alerts-list');
+  if (activeAlertFilter === 'tracking') { container.innerHTML = renderAlertTracking(alerts); return; }
+  const visible = activeAlertFilter === 'pending' ? pending : eligible;
+  container.innerHTML = visible.length ? visible.map(alert => { const ack = acknowledgementFor(alert); const needsConformity = alert.requirement === 'conformity'; return `<article class="alert-card priority-${escapeOfficial(alert.priority.toLowerCase())}"><div class="alert-card-head"><span>${escapeOfficial(alert.priority)}</span><b>${escapeOfficial(alertStatus(alert))}</b></div><h3>${escapeOfficial(alert.subject)}</h3><p>${escapeOfficial(alert.type)} remitido por <strong>${escapeOfficial(alert.source)}</strong></p><small>${escapeOfficial(alert.createdAt)} · ${escapeOfficial(alert.reference || 'Sin adjunto')}</small><div class="alert-card-actions"><button type="button" data-alert-view="${alert.id}">Visualizar</button><button type="button" data-alert-knowledge="${alert.id}"${ack?.knowledgeAt ? ' disabled' : ''}>Tomé conocimiento</button>${needsConformity ? `<button type="button" data-alert-conformity="${alert.id}"${ack?.conformityAt ? ' disabled' : ''}>Doy conformidad</button>` : ''}</div><div class="alert-observation"><input data-alert-note="${alert.id}" placeholder="Escriba una observación"><button type="button" data-alert-observe="${alert.id}">Observar</button></div></article>`; }).join('') : '<p class="alerts-empty">No existen alertas en esta bandeja.</p>';
+  container.querySelectorAll('[data-alert-view]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertView, { viewedAt: new Date().toISOString() }); notify('Información visualizada.'); }));
+  container.querySelectorAll('[data-alert-knowledge]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertKnowledge, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), observedAt: null, note: '' }); notify('Constancia de conocimiento registrada.'); }));
+  container.querySelectorAll('[data-alert-conformity]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertConformity, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), conformityAt: new Date().toISOString(), observedAt: null, note: '' }); notify('Conformidad registrada.'); }));
+  container.querySelectorAll('[data-alert-observe]').forEach(button => button.addEventListener('click', () => { const note = container.querySelector(`[data-alert-note="${button.dataset.alertObserve}"]`).value.trim(); if (!note) return notify('Escriba el motivo de la observación.'); updateAlertAcknowledgement(button.dataset.alertObserve, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), observedAt: new Date().toISOString(), conformityAt: null, note }); notify('Observación registrada.'); }));
+}
+document.getElementById('alerts-button').addEventListener('click', () => { const panel = document.getElementById('alerts-panel'); panel.hidden = !panel.hidden; document.getElementById('alerts-button').setAttribute('aria-expanded', String(!panel.hidden)); renderInternalAlerts(); });
+document.getElementById('alerts-close').addEventListener('click', () => { document.getElementById('alerts-panel').hidden = true; document.getElementById('alerts-button').setAttribute('aria-expanded', 'false'); });
+document.querySelectorAll('[data-alert-filter]').forEach(button => button.addEventListener('click', () => { activeAlertFilter = button.dataset.alertFilter; document.querySelectorAll('[data-alert-filter]').forEach(item => item.classList.toggle('active', item === button)); renderInternalAlerts(); }));
+new MutationObserver(renderInternalAlerts).observe(document.getElementById('session-user-role'), { childList: true, subtree: true, characterData: true });
+renderInternalAlerts();
 
 window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-record'));
