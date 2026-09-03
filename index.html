@@ -273,10 +273,10 @@
               <label>Referencia<input id="information-reference" type="text" maxlength="80" placeholder="Número o referencia del documento" required /></label>
               <label>Fecha<input id="information-date" type="date" required /></label>
               <label class="file-field">Archivo
-                <input id="information-file" type="file" accept=".pdf,.doc,.docx" required />
+                <input id="information-file" type="file" accept=".pdf,.doc,.docx" />
                 <small>Formatos previstos: PDF, DOC y DOCX.</small>
               </label>
-              <button class="primary-button" type="submit">Publicar para el personal</button>
+              <div class="publication-actions"><button id="information-cancel-edit" class="secondary-light-button" type="button" hidden>Cancelar edición</button><button id="information-submit" class="primary-button" type="submit">Publicar para el personal</button></div>
             </form>
             <p class="storage-note">El prototipo conserva la publicación en este navegador. El archivo institucional requerirá almacenamiento seguro y permisos por rol.</p>
           </article>
@@ -372,8 +372,8 @@
             <button class="g1-card" data-g1="pc">
               <span class="g1-number">05</span><div><strong>Administración interna</strong><small>Planes, informes, radiogramas y oficios.</small></div><i>4 áreas</i>
             </button>
-            <button class="g1-card" data-g1="diversos">
-              <span class="g1-number">06</span><div><strong>Diversos</strong><small>Publicación de disposiciones generales.</small></div><i>1 área</i>
+            <button class="g1-card" data-g1="varios">
+              <span class="g1-number">06</span><div><strong>Varios</strong><small>Publicación de disposiciones generales.</small></div><i>1 área</i>
             </button>
           </div>
         </section>
