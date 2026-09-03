@@ -57,8 +57,19 @@ document.querySelectorAll('[data-demo]').forEach(item => item.addEventListener('
 
 const informationStorageKey = 'simu_demo_disposiciones_v1';
 let informationAccessMode = 'personal';
+let editingInformationIndex = null;
 const generalInformationForm = document.getElementById('general-information-form');
+const informationCancelEdit = document.getElementById('information-cancel-edit');
+const informationSubmit = document.getElementById('information-submit');
 document.getElementById('information-date').value = new Date().toISOString().slice(0, 10);
+
+function resetInformationForm() {
+  editingInformationIndex = null;
+  generalInformationForm.reset();
+  document.getElementById('information-date').value = new Date().toISOString().slice(0, 10);
+  informationCancelEdit.hidden = true;
+  informationSubmit.textContent = 'Publicar para el personal';
+}
 
 function readInformationPublications() {
   try {
@@ -74,7 +85,7 @@ function readInformationPublications() {
 function renderInformationPublications() {
   const publications = readInformationPublications();
   const container = document.getElementById('information-rows');
-  container.innerHTML = publications.length ? publications.map((item, index) => `<article class="information-row"><div><span>${escapeOfficial(item.type)}</span><strong>${escapeOfficial(item.subject)}</strong><small>${escapeOfficial(item.reference)} · ${escapeOfficial(item.date)} · ${escapeOfficial(item.fileName || 'Sin archivo')}</small></div><div class="information-row-actions"><button type="button" data-consult-information="${index}">Consultar</button>${informationAccessMode === 'p1' ? `<button class="information-delete" type="button" data-delete-information="${index}">Retirar</button>` : ''}</div></article>`).join('') : '<p class="information-empty">No existen disposiciones publicadas.</p>';
+  container.innerHTML = publications.length ? publications.map((item, index) => `<article class="information-row"><div><span>${escapeOfficial(item.type)}</span><strong>${escapeOfficial(item.subject)}</strong><small>${escapeOfficial(item.reference)} · ${escapeOfficial(item.date)} · ${escapeOfficial(item.fileName || 'Sin archivo')}</small></div><div class="information-row-actions"><button type="button" data-consult-information="${index}">Consultar</button>${informationAccessMode === 'p1' ? `<button type="button" data-edit-information="${index}">Editar</button><button class="information-delete" type="button" data-delete-information="${index}">Retirar</button>` : ''}</div></article>`).join('') : '<p class="information-empty">No existen disposiciones publicadas.</p>';
   container.querySelectorAll('[data-consult-information]').forEach(button => button.addEventListener('click', () => {
     const item = publications[Number(button.dataset.consultInformation)];
     notify(`${item.type}: ${item.subject}. Archivo registrado: ${item.fileName || 'sin archivo'}.`);
@@ -85,15 +96,28 @@ function renderInformationPublications() {
     renderInformationPublications();
     notify('La disposición fue retirada del Portal del Personal.');
   }));
+  container.querySelectorAll('[data-edit-information]').forEach(button => button.addEventListener('click', () => {
+    editingInformationIndex = Number(button.dataset.editInformation);
+    const item = publications[editingInformationIndex];
+    document.getElementById('information-type').value = item.type;
+    document.getElementById('information-subject').value = item.subject;
+    document.getElementById('information-reference').value = item.reference;
+    document.getElementById('information-date').value = item.date;
+    document.getElementById('information-file').value = '';
+    informationCancelEdit.hidden = false;
+    informationSubmit.textContent = 'Guardar cambios';
+    document.getElementById('information-admin-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
 }
 
 function openInformation(mode = 'personal') {
   informationAccessMode = mode;
   const isP1 = mode === 'p1';
+  resetInformationForm();
   document.getElementById('information-admin-panel').hidden = !isP1;
-  document.getElementById('information-return').textContent = isP1 ? 'Volver a Diversos' : 'Volver al portal';
-  document.getElementById('information-return').onclick = () => isP1 ? renderG1Detail('diversos') : showView('portal');
-  setText('information-eyebrow', isP1 ? 'DIVERSOS · ADMINISTRACIÓN P-1' : 'DIFUSIÓN INTERNA');
+  document.getElementById('information-return').textContent = isP1 ? 'Volver a Varios' : 'Volver al portal';
+  document.getElementById('information-return').onclick = () => isP1 ? renderG1Detail('varios') : showView('portal');
+  setText('information-eyebrow', isP1 ? 'VARIOS · ADMINISTRACIÓN P-1' : 'DIFUSIÓN INTERNA');
   setText('information-heading', isP1 ? 'Publicación de disposiciones' : 'Disposiciones generales');
   setText('information-description', isP1 ? 'Cargue y administre la información autorizada para conocimiento del personal.' : 'Consulte las disposiciones publicadas por el P-1.');
   setText('information-access-badge', isP1 ? 'Acceso P-1' : 'Consulta general');
@@ -105,19 +129,24 @@ generalInformationForm.addEventListener('submit', event => {
   event.preventDefault();
   const file = document.getElementById('information-file').files[0];
   const publications = readInformationPublications();
-  publications.unshift({
+  if (editingInformationIndex === null && !file) return notify('Seleccione el archivo que será publicado para el personal.');
+  const previous = editingInformationIndex === null ? null : publications[editingInformationIndex];
+  const publication = {
     type: document.getElementById('information-type').value,
     subject: document.getElementById('information-subject').value.trim(),
     reference: document.getElementById('information-reference').value.trim(),
     date: document.getElementById('information-date').value,
-    fileName: file?.name || 'Sin archivo'
-  });
+    fileName: file?.name || previous?.fileName || 'Sin archivo'
+  };
+  if (editingInformationIndex === null) publications.unshift(publication);
+  else publications[editingInformationIndex] = publication;
   localStorage.setItem(informationStorageKey, JSON.stringify(publications));
-  generalInformationForm.reset();
-  document.getElementById('information-date').value = new Date().toISOString().slice(0, 10);
+  const wasEditing = editingInformationIndex !== null;
+  resetInformationForm();
   renderInformationPublications();
-  notify('Disposición publicada en el Portal del Personal.');
+  notify(wasEditing ? 'La disposición fue actualizada.' : 'Disposición publicada en el Portal del Personal.');
 });
+informationCancelEdit.addEventListener('click', resetInformationForm);
 document.getElementById('information-return').onclick = () => showView('portal');
 renderInformationPublications();
 
@@ -282,9 +311,9 @@ function buildVacationReport() {
   const movements = profile.movements.map(row => `<tr>${row.map(cell => `<td>${escapeOfficial(cell)}</td>`).join('')}</tr>`).join('');
   const consolidated = Object.values(personnelProfiles).map((item, index) => `<tr><td>${index + 1}</td><td>${escapeOfficial(item.name)}</td><td>${escapeOfficial(item.unit)}</td><td>${item.annual}</td><td>${item.used}</td><td>${item.permits}</td><td>${vacationBalance(item)}</td><td>${escapeOfficial(item.scheduleState)}</td></tr>`).join('');
   const content = vacationAccessMode === 'p1'
-    ? `<h2>REPORTE CONSOLIDADO DE VACACIONES Y PERMISOS</h2><p class="vacation-report-scope">Administración del P-1 · Datos demostrativos</p><table><thead><tr><th>N.º</th><th>Personal</th><th>Dependencia</th><th>Derecho</th><th>Utilizado</th><th>Permisos</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>${consolidated}</tbody></table>`
-    : `<h2>REPORTE INDIVIDUAL DE VACACIONES</h2><p class="vacation-report-scope">Consulta autorizada del titular · Datos demostrativos</p><div class="vacation-report-person"><p><b>Personal:</b> ${escapeOfficial(profile.name)}</p><p><b>Dependencia:</b> ${escapeOfficial(profile.unit)}</p><p><b>Periodo programado:</b> ${escapeOfficial(profile.period)}</p><p><b>Estado:</b> ${escapeOfficial(profile.scheduleState)}</p></div><table><thead><tr><th>Derecho anual</th><th>Reserva colectiva</th><th>Utilizado</th><th>Permisos</th><th>Compensación</th><th>Saldo</th></tr></thead><tbody><tr><td>${profile.annual}</td><td>${profile.collective}</td><td>${profile.used}</td><td>${profile.permits}</td><td>${profile.compensation}</td><td>${vacationBalance(profile)}</td></tr></tbody></table><h3>HISTORIAL DE MOVIMIENTOS</h3><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Días</th><th>Efecto</th><th>Estado</th></tr></thead><tbody>${movements}</tbody></table>`;
-  container.innerHTML = `<article class="vacation-official-page"><header><div><strong>UNIDAD DEMOSTRATIVA</strong><strong>SECCIÓN I - PERSONAL</strong><u>BOLIVIA</u></div><div><b>SIMU</b><span>Fecha: ${vacationReportDate()}</span></div></header>${content}<div class="vacation-report-signatures"><div>RESPONSABLE P-1</div><div>INTERESADO</div></div><p class="vacation-report-warning">DOCUMENTO DEMOSTRATIVO - NO CONTIENE DATOS INSTITUCIONALES REALES</p></article>`;
+    ? `<h2>REPORTE CONSOLIDADO DE VACACIONES Y PERMISOS</h2><p class="vacation-report-scope">Administración del P-1</p><table><thead><tr><th>N.º</th><th>Personal</th><th>Dependencia</th><th>Derecho</th><th>Utilizado</th><th>Permisos</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>${consolidated}</tbody></table>`
+    : `<h2>REPORTE INDIVIDUAL DE VACACIONES</h2><p class="vacation-report-scope">Consulta autorizada del titular</p><div class="vacation-report-person"><p><b>Personal:</b> ${escapeOfficial(profile.name)}</p><p><b>Dependencia:</b> ${escapeOfficial(profile.unit)}</p><p><b>Periodo programado:</b> ${escapeOfficial(profile.period)}</p><p><b>Estado:</b> ${escapeOfficial(profile.scheduleState)}</p></div><table><thead><tr><th>Derecho anual</th><th>Reserva colectiva</th><th>Utilizado</th><th>Permisos</th><th>Compensación</th><th>Saldo</th></tr></thead><tbody><tr><td>${profile.annual}</td><td>${profile.collective}</td><td>${profile.used}</td><td>${profile.permits}</td><td>${profile.compensation}</td><td>${vacationBalance(profile)}</td></tr></tbody></table><h3>HISTORIAL DE MOVIMIENTOS</h3><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Días</th><th>Efecto</th><th>Estado</th></tr></thead><tbody>${movements}</tbody></table>`;
+  container.innerHTML = `<article class="vacation-official-page"><header><div class="vacation-letterhead"><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><strong>SECCIÓN I - PERSONAL</strong><u>BOLIVIA</u></div><div class="vacation-report-date"><span>Fecha: ${vacationReportDate()}</span></div></header>${content}<div class="vacation-report-signatures"><div>RESPONSABLE P-1</div><div>INTERESADO</div></div><p class="vacation-report-warning">DOCUMENTO DEMOSTRATIVO - NO CONTIENE DATOS INSTITUCIONALES REALES</p></article>`;
 }
 
 document.getElementById('vacation-print').addEventListener('click', () => {
@@ -333,8 +362,8 @@ const g1Functions = {
       { id: 'oficios', title: 'Oficios', description: 'Elaboración, registro y seguimiento de oficios de la Sección I - Personal.' }
     ]
   },
-  diversos: {
-    number: '06', title: 'Diversos', purpose: 'Publicar disposiciones y documentos autorizados para conocimiento del personal.',
+  varios: {
+    number: '06', title: 'Varios', purpose: 'Publicar disposiciones y documentos autorizados para conocimiento del personal.',
     areas: [
       { id: 'disposiciones', title: 'Publicación de disposiciones generales', description: 'Carga y administración de documentos visibles desde el Portal del Personal.' }
     ]
@@ -669,7 +698,23 @@ function renderTroopSummary() {
 function renderTroopRecords() {
   const records = troopRecords.filter(record => record.section === activeTroopSection);
   const tbody = document.getElementById('troop-records');
-  tbody.innerHTML = records.length ? records.map((record, index) => `<tr><td>${index + 1}</td><td>${escapeOfficial(record.rank)}</td><td>${escapeOfficial(record.name)}</td><td>${escapeOfficial(record.unit)}</td><td>${troopDate(record.from)}</td><td>${troopDate(record.to)}</td><td>${escapeOfficial(record.detail || '—')}</td><td>${escapeOfficial(record.observation || '—')}</td><td><button type="button" data-remove-troop="${troopRecords.indexOf(record)}" aria-label="Eliminar registro">×</button></td></tr>`).join('') : '<tr class="troop-no-records"><td colspan="9">NO SE REGISTRÓ PERSONAL EN ESTA NOVEDAD</td></tr>';
+  const rankOptions = selected => ['DGTE.', 'CABO', 'SLDO.', 'PREMIL.', 'OTRO'].map(rank => `<option value="${rank}"${rank === selected ? ' selected' : ''}>${rank}</option>`).join('');
+  tbody.innerHTML = records.length ? records.map((record, index) => {
+    const recordIndex = troopRecords.indexOf(record);
+    return `<tr data-troop-row="${recordIndex}"><td>${index + 1}</td><td><select data-field="rank" aria-label="Grado">${rankOptions(record.rank)}</select></td><td><input data-field="name" value="${escapeOfficial(record.name)}" aria-label="Nombres" /></td><td><input data-field="unit" value="${escapeOfficial(record.unit)}" aria-label="Unidad" /></td><td><input data-field="from" type="date" value="${escapeOfficial(record.from)}" aria-label="Fecha desde" /></td><td><input data-field="to" type="date" value="${escapeOfficial(record.to)}" aria-label="Fecha hasta" /></td><td><input data-field="detail" value="${escapeOfficial(record.detail || '')}" aria-label="Detalle" /></td><td><input data-field="observation" value="${escapeOfficial(record.observation || '')}" aria-label="Situación actual" /></td><td><div class="troop-row-actions"><button class="troop-save-button" type="button" data-save-troop="${recordIndex}">Guardar</button><button class="troop-delete-button" type="button" data-remove-troop="${recordIndex}" aria-label="Eliminar registro">×</button></div></td></tr>`;
+  }).join('') : '<tr class="troop-no-records"><td colspan="9">NO SE REGISTRÓ PERSONAL EN ESTA NOVEDAD</td></tr>';
+  tbody.querySelectorAll('[data-save-troop]').forEach(button => button.addEventListener('click', () => {
+    const recordIndex = Number(button.dataset.saveTroop);
+    const row = button.closest('[data-troop-row]');
+    const value = field => row.querySelector(`[data-field="${field}"]`).value.trim();
+    const updated = { ...troopRecords[recordIndex], rank: value('rank'), name: value('name'), unit: value('unit'), from: value('from'), to: value('to'), detail: value('detail'), observation: value('observation') };
+    if (!updated.rank || !updated.name || !updated.unit) return notify('Complete grado, nombres y unidad antes de guardar.');
+    if (updated.to && updated.from && updated.to < updated.from) return notify('La fecha hasta no puede ser anterior a la fecha desde.');
+    troopRecords[recordIndex] = updated;
+    localStorage.setItem(troopStorageKey, JSON.stringify(troopData()));
+    renderTroopModule();
+    notify('Los datos del registro fueron actualizados.');
+  }));
   tbody.querySelectorAll('[data-remove-troop]').forEach(button => button.addEventListener('click', () => { troopRecords.splice(Number(button.dataset.removeTroop), 1); renderTroopModule(); notify('Registro demostrativo eliminado.'); }));
 }
 function renderTroopModule() {
