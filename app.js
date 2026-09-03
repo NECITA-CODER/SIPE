@@ -11,7 +11,7 @@ function showView(id, options = {}) {
   if (id !== currentViewId && !options.fromHistory) viewHistory.push(currentViewId);
   currentViewId = id;
   views.forEach(view => view.classList.toggle('active-view', view.id === id));
-  const activeNavigation = id === 'informacion' && informationAccessMode === 'personal' ? 'portal' : ['vacaciones', 'relaciones', 'hoja-vida', 'felicitaciones', 'radiogramas', 'cuadros', 'tropa', 'memorandums', 'p1-funcion', 'p1-registro'].includes(id) || (id === 'informacion' && informationAccessMode === 'p1') ? 'p1' : id;
+  const activeNavigation = id === 'informacion' && informationAccessMode === 'personal' ? 'portal' : ['vacaciones', 'relaciones', 'filiaciones', 'hoja-vida', 'felicitaciones', 'radiogramas', 'cuadros', 'tropa', 'memorandums', 'p1-funcion', 'p1-registro'].includes(id) || (id === 'informacion' && informationAccessMode === 'p1') ? 'p1' : id;
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
     inicio: 'Inicio',
@@ -21,6 +21,7 @@ function showView(id, options = {}) {
     portal: 'Portal del Personal',
     vacaciones: 'Reporte individual de vacaciones',
     relaciones: 'Relaciones nominales',
+    filiaciones: 'Filiaciones personales',
     'hoja-vida': 'Hoja de vida del personal',
     felicitaciones: 'Memorándums de felicitación',
     radiogramas: 'Radiogramas',
@@ -300,6 +301,12 @@ const personnelProfiles = {
     ]
   }
 };
+const vacationProfilesKey = 'simu_demo_vacaciones_personal_v2';
+try {
+  const savedProfiles = JSON.parse(localStorage.getItem(vacationProfilesKey) || 'null');
+  if (savedProfiles && typeof savedProfiles === 'object') Object.entries(savedProfiles).forEach(([id, profile]) => { if (personnelProfiles[id]) Object.assign(personnelProfiles[id], profile); });
+} catch { localStorage.removeItem(vacationProfilesKey); }
+function saveVacationProfiles() { localStorage.setItem(vacationProfilesKey, JSON.stringify(personnelProfiles)); }
 
 function setText(id, value) { document.getElementById(id).textContent = value; }
 
@@ -307,6 +314,7 @@ function renderProfile(profileId) {
   const profile = personnelProfiles[profileId];
   const balance = profile.annual - profile.collective - profile.used - profile.permits + profile.compensation;
   setText('profile-initials', profile.initials); setText('profile-name', profile.name); setText('profile-unit', profile.unit);
+  setText('profile-current-status', profile.currentStatus || 'Disponible');
   setText('annual-days', profile.annual); setText('collective-days', profile.collective); setText('used-days', profile.used); setText('permit-days', profile.permits); setText('balance-days', balance);
   setText('formula-annual', profile.annual); setText('formula-collective', profile.collective); setText('formula-used', profile.used); setText('formula-permits', profile.permits); setText('formula-compensation', profile.compensation); setText('formula-balance', balance);
   setText('schedule-period', profile.period); setText('schedule-days', profile.scheduleDays); setText('schedule-state', profile.scheduleState); setText('schedule-status', profile.scheduleState === 'Aprobado' ? 'Programado' : profile.scheduleState);
@@ -322,8 +330,14 @@ function openVacationReport(mode = 'personal') {
   vacationAccessMode = mode;
   const isP1 = mode === 'p1';
   const returnButton = document.getElementById('vacation-return');
+  setText('vacation-eyebrow', isP1 ? 'ADMINISTRACIÓN DEL PERSONAL' : 'CONSULTA INDIVIDUAL');
+  setText('vacation-heading', isP1 ? 'Vacaciones y permisos' : 'Reporte individual de vacaciones');
+  setText('vacation-description', isP1 ? 'Registro de movimientos y generación de reportes individual y consolidado.' : 'Consulta personal del rol, saldo disponible y movimientos de vacaciones.');
   returnButton.textContent = isP1 ? 'Volver al P-1' : 'Volver al portal';
   returnButton.onclick = () => showView(isP1 ? 'p1' : 'portal');
+  document.getElementById('vacation-report-type-wrap').hidden = !isP1;
+  document.getElementById('vacation-admin-form').hidden = !isP1;
+  document.getElementById('vacation-report-type').value = isP1 ? 'consolidated' : 'individual';
   document.getElementById('vacation-print').textContent = isP1 ? 'Imprimir reporte consolidado' : 'Imprimir reporte individual';
   showView('vacaciones');
 }
@@ -341,7 +355,8 @@ function buildVacationReport() {
   const profile = personnelProfiles[document.getElementById('profile-select').value];
   const movements = profile.movements.map(row => `<tr>${row.map(cell => `<td>${escapeOfficial(cell)}</td>`).join('')}</tr>`).join('');
   const consolidated = Object.values(personnelProfiles).map((item, index) => `<tr><td>${index + 1}</td><td>${escapeOfficial(item.name)}</td><td>${escapeOfficial(item.unit)}</td><td>${item.annual}</td><td>${item.used}</td><td>${item.permits}</td><td>${vacationBalance(item)}</td><td>${escapeOfficial(item.scheduleState)}</td></tr>`).join('');
-  const content = vacationAccessMode === 'p1'
+  const useConsolidated = vacationAccessMode === 'p1' && document.getElementById('vacation-report-type').value === 'consolidated';
+  const content = useConsolidated
     ? `<h2>REPORTE CONSOLIDADO DE VACACIONES Y PERMISOS</h2><p class="vacation-report-scope">Administración del P-1</p><table><thead><tr><th>N.º</th><th>Personal</th><th>Dependencia</th><th>Derecho</th><th>Utilizado</th><th>Permisos</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>${consolidated}</tbody></table>`
     : `<h2>REPORTE INDIVIDUAL DE VACACIONES</h2><p class="vacation-report-scope">Consulta autorizada del titular</p><div class="vacation-report-person"><p><b>Personal:</b> ${escapeOfficial(profile.name)}</p><p><b>Dependencia:</b> ${escapeOfficial(profile.unit)}</p><p><b>Periodo programado:</b> ${escapeOfficial(profile.period)}</p><p><b>Estado:</b> ${escapeOfficial(profile.scheduleState)}</p></div><table><thead><tr><th>Derecho anual</th><th>Reserva colectiva</th><th>Utilizado</th><th>Permisos</th><th>Compensación</th><th>Saldo</th></tr></thead><tbody><tr><td>${profile.annual}</td><td>${profile.collective}</td><td>${profile.used}</td><td>${profile.permits}</td><td>${profile.compensation}</td><td>${vacationBalance(profile)}</td></tr></tbody></table><h3>HISTORIAL DE MOVIMIENTOS</h3><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Días</th><th>Efecto</th><th>Estado</th></tr></thead><tbody>${movements}</tbody></table>`;
   container.innerHTML = `<article class="vacation-official-page"><header><div class="vacation-letterhead"><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><strong>SECCIÓN I - PERSONAL</strong><u>BOLIVIA</u></div><div class="vacation-report-date"><span>Fecha: ${vacationReportDate()}</span></div></header>${content}<div class="vacation-report-signatures"><div>RESPONSABLE P-1</div><div>INTERESADO</div></div><p class="vacation-report-warning">DOCUMENTO DEMOSTRATIVO - NO CONTIENE DATOS INSTITUCIONALES REALES</p></article>`;
@@ -351,6 +366,39 @@ document.getElementById('vacation-print').addEventListener('click', () => {
   buildVacationReport();
   document.body.classList.add('printing-official-vacation-report');
   window.setTimeout(() => window.print(), 80);
+});
+document.getElementById('vacation-report-type').addEventListener('change', event => { document.getElementById('vacation-print').textContent = event.target.value === 'consolidated' ? 'Imprimir reporte consolidado' : 'Imprimir reporte individual'; });
+document.getElementById('vacation-start').value = new Date().toISOString().slice(0, 10);
+document.getElementById('vacation-end').value = new Date().toISOString().slice(0, 10);
+document.getElementById('vacation-admin-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const profileId = document.getElementById('profile-select').value;
+  const profile = personnelProfiles[profileId];
+  const type = document.getElementById('vacation-movement-type').value;
+  const days = Number(document.getElementById('vacation-days').value);
+  const state = document.getElementById('vacation-state').value;
+  if (!profile || !Number.isFinite(days) || days < 1) return notify('Revise el personal y la cantidad de días.');
+  const available = Number(document.getElementById('availability-count')?.textContent || 0);
+  const total = Number(document.getElementById('metric-effective-current')?.textContent || 0);
+  const projected = total ? ((available - (type === 'Compensación' ? 0 : 1)) / total) * 100 : 100;
+  if (state !== 'Anulado' && projected < 75 && !window.confirm(`La disponibilidad proyectada es ${projected.toFixed(1)} %, inferior al mínimo de 75 %. ¿Desea registrar el movimiento demostrativo?`)) return;
+  if (state !== 'Anulado') {
+    if (type === 'Vacación') profile.used += days;
+    else if (type === 'Permiso') profile.permits += days;
+    else profile.compensation += days;
+  }
+  const start = document.getElementById('vacation-start').value;
+  const end = document.getElementById('vacation-end').value;
+  profile.period = `${start} al ${end}`;
+  profile.scheduleDays = `${days} ${days === 1 ? 'día' : 'días'} hábiles`;
+  profile.scheduleState = state;
+  profile.currentStatus = state === 'Autorizado' && type !== 'Compensación' ? type : 'Disponible';
+  const effect = state === 'Anulado' ? 'Sin efecto' : type === 'Compensación' ? `+${days} días` : `-${days} días`;
+  profile.movements.unshift([start, type, String(days), effect, state]);
+  saveVacationProfiles(); renderProfile(profileId);
+  event.currentTarget.reset();
+  document.getElementById('vacation-start').value = new Date().toISOString().slice(0, 10); document.getElementById('vacation-end').value = new Date().toISOString().slice(0, 10); document.getElementById('vacation-days').value = '1';
+  notify('Movimiento registrado. Los reportes individual y consolidado fueron actualizados.');
 });
 window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-vacation-report'));
 document.getElementById('vacation-return').onclick = () => showView('portal');
@@ -395,7 +443,7 @@ const g1Functions = {
     ]
   },
   varios: {
-    number: '06', title: 'Varios', purpose: 'Publicar disposiciones y documentos autorizados para conocimiento del personal.',
+    number: '06', title: 'Publicación de disposiciones', purpose: 'Publicar disposiciones y documentos autorizados para conocimiento del personal.',
     areas: [
       { id: 'disposiciones', title: 'Publicación de disposiciones generales', description: 'Carga y administración de documentos visibles desde el Portal del Personal.' }
     ]
@@ -430,6 +478,10 @@ function renderG1Detail(key) {
     }
     if (button.dataset.register === 'relaciones') {
       showView('relaciones');
+      return;
+    }
+    if (button.dataset.register === 'filiaciones') {
+      showView('filiaciones');
       return;
     }
     if (button.dataset.register === 'hoja-vida') {
@@ -493,7 +545,7 @@ let nominalRecords = [
 
 function nominalSection(id = activeNominalSection) { return nominalSections.find(section => section.id === id) || nominalSections[0]; }
 function saveNominalRecords() { localStorage.setItem(nominalStorageKey, JSON.stringify(nominalRecords)); }
-function renderNominalModule() {
+function renderNominalModuleLegacy() {
   const section = nominalSection();
   setText('nominal-section-title', `${section.numeral}.- ${section.title}`);
   setText('nominal-total', `${nominalRecords.length} ${nominalRecords.length === 1 ? 'registro' : 'registros'}`);
@@ -527,13 +579,47 @@ function renderNominalModule() {
   }));
 }
 
+let nominalViewMode = 'alphabetical';
+function nominalRecordSection(record) { return nominalSections.find(section => section.id === record.section)?.title || 'Sin especialidad'; }
+function normalizeNominalRecords() { nominalRecords = nominalRecords.map((record, index) => ({ seniority: record.seniority || index + 1, echelon: record.echelon || (record.rank?.startsWith('Al.') ? 'Oficiales' : 'Tropa'), unit: record.unit || 'Compañía de Comando', ...record })); }
+function nominalGroupsForMode(mode) {
+  if (mode === 'section') return [...new Set(nominalRecords.map(nominalRecordSection))].sort();
+  if (mode === 'echelon') return ['Oficiales', 'Suboficiales y Sargentos', 'Tropa', 'Empleados Civiles'];
+  if (mode === 'unit') return [...new Set(nominalRecords.map(record => record.unit))].sort();
+  return [];
+}
+function renderNominalModule() {
+  normalizeNominalRecords();
+  setText('nominal-section-title', nominalViewMode === 'alphabetical' ? 'Relación por orden alfabético' : nominalViewMode === 'seniority' ? 'Relación por antigüedad' : nominalViewMode === 'section' ? 'Relación por armas y especialidades' : nominalViewMode === 'echelon' ? 'Relación por escalafón' : 'Relación por dependencia');
+  setText('nominal-total', `${nominalRecords.length} ${nominalRecords.length === 1 ? 'registro' : 'registros'}`);
+  const groupSelect = document.getElementById('nominal-group-filter');
+  const previousGroup = groupSelect.value;
+  const groups = nominalGroupsForMode(nominalViewMode);
+  groupSelect.disabled = !groups.length;
+  groupSelect.innerHTML = '<option value="all">Todos</option>' + groups.map(group => `<option value="${escapeOfficial(group)}">${escapeOfficial(group)}</option>`).join('');
+  if ([...groupSelect.options].some(option => option.value === previousGroup)) groupSelect.value = previousGroup;
+  const search = document.getElementById('nominal-search').value.trim().toLocaleLowerCase('es');
+  let records = nominalRecords.filter(record => !search || `${record.rank} ${record.name}`.toLocaleLowerCase('es').includes(search));
+  if (groupSelect.value !== 'all') records = records.filter(record => nominalViewMode === 'section' ? nominalRecordSection(record) === groupSelect.value : nominalViewMode === 'echelon' ? record.echelon === groupSelect.value : record.unit === groupSelect.value);
+  const direction = document.getElementById('nominal-direction').value === 'desc' ? -1 : 1;
+  records.sort((a, b) => direction * (nominalViewMode === 'seniority' ? Number(a.seniority) - Number(b.seniority) : nominalViewMode === 'section' ? nominalRecordSection(a).localeCompare(nominalRecordSection(b), 'es') || a.name.localeCompare(b.name, 'es') : nominalViewMode === 'echelon' ? a.echelon.localeCompare(b.echelon, 'es') || Number(a.seniority) - Number(b.seniority) : nominalViewMode === 'unit' ? a.unit.localeCompare(b.unit, 'es') || a.name.localeCompare(b.name, 'es') : a.name.localeCompare(b.name, 'es')));
+  const tbody = document.getElementById('nominal-records');
+  tbody.innerHTML = records.length ? records.map((record, index) => { const recordIndex = nominalRecords.indexOf(record); return `<tr data-nominal-row="${recordIndex}"><td>${index + 1}</td><td><input data-field="rank" value="${escapeOfficial(record.rank)}"></td><td><input data-field="name" value="${escapeOfficial(record.name)}"></td><td><input data-field="seniority" type="number" min="1" value="${record.seniority}"></td><td><select data-field="section">${nominalSections.map(section => `<option value="${section.id}"${section.id === record.section ? ' selected' : ''}>${escapeOfficial(section.title)}</option>`).join('')}</select></td><td><select data-field="echelon">${['Oficiales','Suboficiales y Sargentos','Tropa','Empleados Civiles'].map(value => `<option${value === record.echelon ? ' selected' : ''}>${value}</option>`).join('')}</select></td><td><input data-field="unit" value="${escapeOfficial(record.unit)}"></td><td><input data-field="observation" value="${escapeOfficial(record.observation || '')}"></td><td><div class="nominal-row-actions"><button type="button" data-save-nominal="${recordIndex}">Guardar</button><button class="nominal-delete" type="button" data-remove-nominal="${recordIndex}" aria-label="Eliminar">×</button></div></td></tr>`; }).join('') : '<tr class="nominal-empty-row"><td colspan="9">NO EXISTEN REGISTROS PARA ESTA VISTA</td></tr>';
+  tbody.querySelectorAll('[data-save-nominal]').forEach(button => button.addEventListener('click', () => { const recordIndex = Number(button.dataset.saveNominal); const row = button.closest('[data-nominal-row]'); const value = field => row.querySelector(`[data-field="${field}"]`).value.trim(); nominalRecords[recordIndex] = { ...nominalRecords[recordIndex], rank:value('rank'), name:value('name'), seniority:Number(value('seniority')), section:value('section'), echelon:value('echelon'), unit:value('unit'), observation:value('observation') }; saveNominalRecords(); renderNominalModule(); notify('Registro nominal actualizado.'); }));
+  tbody.querySelectorAll('[data-remove-nominal]').forEach(button => button.addEventListener('click', () => { nominalRecords.splice(Number(button.dataset.removeNominal), 1); saveNominalRecords(); renderNominalModule(); notify('Registro nominal eliminado.'); }));
+}
+document.getElementById('nominal-view-mode').addEventListener('change', event => { nominalViewMode = event.target.value; document.getElementById('nominal-group-filter').value = 'all'; renderNominalModule(); });
+document.getElementById('nominal-group-filter').addEventListener('change', renderNominalModule);
+document.getElementById('nominal-search').addEventListener('input', renderNominalModule);
+document.getElementById('nominal-direction').addEventListener('change', renderNominalModule);
+
 document.getElementById('nominal-entry-form').addEventListener('submit', event => {
   event.preventDefault();
   const rank = document.getElementById('nominal-rank').value.trim();
   const name = document.getElementById('nominal-name').value.trim();
   const observation = document.getElementById('nominal-observation').value.trim();
   if (!rank || !name) return notify('Complete el grado y los apellidos y nombres.');
-  nominalRecords.push({ section: activeNominalSection, rank, name, observation });
+  nominalRecords.push({ section: document.getElementById('nominal-section-input').value, rank, name, seniority: Number(document.getElementById('nominal-seniority').value), echelon: document.getElementById('nominal-echelon').value, unit: document.getElementById('nominal-unit').value.trim(), observation });
   saveNominalRecords();
   event.currentTarget.reset();
   renderNominalModule();
@@ -542,7 +628,7 @@ document.getElementById('nominal-entry-form').addEventListener('submit', event =
 document.getElementById('nominal-save').addEventListener('click', () => { saveNominalRecords(); notify('Relación nominal guardada como borrador.'); });
 document.querySelectorAll('[data-back-administration]').forEach(button => button.addEventListener('click', () => renderG1Detail('administracion')));
 
-function buildOfficialNominalReport() {
+function buildOfficialNominalReportLegacy() {
   const groups = [[0, 1], [2, 3], [4, 5], [6, 7], [8]];
   const pages = groups.map((indices, pageIndex) => `<article class="nominal-official-page">
     <header><div><b>SÉPTIMA DIVISIÓN DEL EJÉRCITO</b><b>RIAEROTRANS-18 “VICTORIA”</b><u>BOLIVIA</u></div><strong>SECRETO</strong></header>
@@ -552,6 +638,14 @@ function buildOfficialNominalReport() {
     <p class="nominal-official-warning">DOCUMENTO DEMOSTRATIVO · IDENTIDADES FICTICIAS</p><footer><b>SECRETO</b><span>${pageIndex + 1} - ${groups.length}</span></footer>
   </article>`).join('');
   document.getElementById('official-nominal-report-print').innerHTML = pages;
+}
+function buildOfficialNominalReport() {
+  const visibleIndices = [...document.querySelectorAll('#nominal-records [data-nominal-row]')].map(row => Number(row.dataset.nominalRow));
+  const records = visibleIndices.map(index => nominalRecords[index]).filter(Boolean);
+  const title = document.getElementById('nominal-section-title').textContent.toUpperCase();
+  const rowsPerPage = 18;
+  const chunks = records.length ? Array.from({ length: Math.ceil(records.length / rowsPerPage) }, (_, index) => records.slice(index * rowsPerPage, (index + 1) * rowsPerPage)) : [[]];
+  document.getElementById('official-nominal-report-print').innerHTML = chunks.map((chunk, pageIndex) => `<article class="nominal-official-page"><header><div><b>SÉPTIMA DIVISIÓN DEL EJÉRCITO</b><b>RIAEROTRANS-18 “VICTORIA”</b><u>BOLIVIA</u></div><strong>SECRETO</strong></header><h1>${escapeOfficial(title)}</h1><section><table><thead><tr><th>N.º</th><th>GRADO</th><th>APELLIDOS Y NOMBRES</th><th>ARMA/ESP.</th><th>ESCALAFÓN</th><th>DEPENDENCIA</th><th>OBS.</th></tr></thead><tbody>${chunk.length ? chunk.map((record, index) => `<tr><td>${pageIndex * rowsPerPage + index + 1}</td><td>${escapeOfficial(record.rank)}</td><td>${escapeOfficial(record.name)}</td><td>${escapeOfficial(nominalRecordSection(record))}</td><td>${escapeOfficial(record.echelon)}</td><td>${escapeOfficial(record.unit)}</td><td>${escapeOfficial(record.observation || '')}</td></tr>`).join('') : '<tr><td colspan="7">NO EXISTEN REGISTROS PARA ESTA VISTA</td></tr>'}</tbody></table></section><p class="nominal-official-warning">DOCUMENTO DEMOSTRATIVO · IDENTIDADES FICTICIAS</p><footer><b>SECRETO</b><span>${pageIndex + 1} - ${chunks.length}</span></footer></article>`).join('');
 }
 document.getElementById('nominal-print').addEventListener('click', () => { buildOfficialNominalReport(); document.body.classList.add('printing-official-nominal-report'); window.setTimeout(() => window.print(), 80); });
 window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-nominal-report'));
@@ -1181,9 +1275,24 @@ document.getElementById('life-photo').addEventListener('change', event => { cons
 document.getElementById('life-add-row').addEventListener('click', () => { lifeRows.push({ type: 'Diversos', day: '', month: '', year: '', detail: '', authority: '' }); renderLifeRows(); });
 document.getElementById('life-record-form').addEventListener('submit', event => { event.preventDefault(); localStorage.setItem(lifeStorageKey, JSON.stringify(collectLifeRecord())); setText('life-status', 'Borrador guardado'); notify('Hoja de vida guardada como borrador.'); });
 document.getElementById('life-archive').addEventListener('click', () => { const history = readLifeHistory(); history.unshift(collectLifeRecord()); localStorage.setItem(lifeHistoryKey, JSON.stringify(history)); renderLifeHistory(); notify('Hoja de vida incorporada al historial demostrativo.'); });
-document.getElementById('life-print').addEventListener('click', () => { buildLifePrint(); document.body.classList.add('printing-official-record'); window.setTimeout(() => window.print(), 80); });
+document.getElementById('life-print').addEventListener('click', () => { buildLifePrint(); document.getElementById('life-preview-content').innerHTML = document.getElementById('official-life-report-print').innerHTML; document.getElementById('life-preview-panel').hidden = false; document.getElementById('life-preview-panel').scrollIntoView({ behavior:'smooth', block:'start' }); });
+document.getElementById('life-preview-close').addEventListener('click', () => { document.getElementById('life-preview-panel').hidden = true; });
+document.getElementById('life-confirm-print').addEventListener('click', () => { buildLifePrint(); document.body.classList.add('printing-official-record'); window.setTimeout(() => window.print(), 80); });
 try { applyLifeRecord(JSON.parse(localStorage.getItem(lifeStorageKey) || 'null')); } catch {}
 renderLifeRows(); renderLifeHistory();
+
+// Filiaciones personales: selección nominal, vista previa e impresión
+const filiationProfiles = {
+  '001': { rank:'Capitán', specialty:'Infantería', name:'Ana Rojas (demostrativo)', birth:'15 de abril de 1992', birthplace:'Cochabamba', department:'Cochabamba', province:'Cercado', locality:'Cercado', incorporation:'31 de diciembre de 2013', identity:'0000001 DEMO', military:'CM-001-DEMO', cossmil:'COS-001-DEMO', blood:'O Rh (+)', institute:'Instituto militar demostrativo', allergies:'Ninguna registrada', civil:'Soltera', address:'Domicilio demostrativo', children:'Sin información demostrativa', spouse:'No corresponde', parents:'Familiares demostrativos', parentsAddress:'Domicilio demostrativo', phone:'70000001', alternate:'4000001', reference:'70000002', email:'persona001@ejemplo.mil', emergency:'Contacto demostrativo' },
+  '002': { rank:'Suboficial Primero', specialty:'Servicios', name:'Luis Flores (demostrativo)', birth:'20 de junio de 1985', birthplace:'Oruro', department:'Oruro', province:'Cercado', locality:'Oruro', incorporation:'15 de enero de 2007', identity:'0000002 DEMO', military:'CM-002-DEMO', cossmil:'COS-002-DEMO', blood:'A Rh (+)', institute:'Instituto militar demostrativo', allergies:'Ninguna registrada', civil:'Casado', address:'Domicilio demostrativo', children:'Registro familiar demostrativo', spouse:'Familiar demostrativo', parents:'Familiares demostrativos', parentsAddress:'Domicilio demostrativo', phone:'70000003', alternate:'4000002', reference:'70000004', email:'persona002@ejemplo.mil', emergency:'Contacto demostrativo' },
+  '003': { rank:'Sargento Segundo', specialty:'Logística', name:'Carla Méndez (demostrativo)', birth:'10 de octubre de 1994', birthplace:'La Paz', department:'La Paz', province:'Murillo', locality:'La Paz', incorporation:'10 de febrero de 2015', identity:'0000003 DEMO', military:'CM-003-DEMO', cossmil:'COS-003-DEMO', blood:'B Rh (+)', institute:'Instituto militar demostrativo', allergies:'Ninguna registrada', civil:'Soltera', address:'Domicilio demostrativo', children:'Sin información demostrativa', spouse:'No corresponde', parents:'Familiares demostrativos', parentsAddress:'Domicilio demostrativo', phone:'70000005', alternate:'4000003', reference:'70000006', email:'persona003@ejemplo.mil', emergency:'Contacto demostrativo' }
+};
+function filiationMarkup(profile, printable = false) { return `<article class="${printable ? 'print-document filiation-print' : 'filiation-document'}"><header><div><strong>SÉPTIMA DIVISIÓN DEL EJÉRCITO</strong><strong>RIAEROTRANS-18 “VICTORIA”</strong><u>BOLIVIA</u></div></header><h1>FILIACIÓN DE DATOS PERSONALES</h1><div class="filiation-fields">${[['GRADO',profile.rank],['ARMA O ESPECIALIDAD',profile.specialty],['NOMBRES Y APELLIDOS',profile.name],['FECHA DE NACIMIENTO',profile.birth],['LUGAR DE NACIMIENTO',profile.birthplace],['DEPARTAMENTO / PROVINCIA / LOCALIDAD',`${profile.department} / ${profile.province} / ${profile.locality}`],['FECHA DE EGRESO O INCORPORACIÓN',profile.incorporation],['CÉDULA DE IDENTIDAD',profile.identity],['CARNET MILITAR',profile.military],['CARNET DE COSSMIL',profile.cossmil],['GRUPO SANGUÍNEO',profile.blood],['INSTITUTO DE EGRESO',profile.institute],['ALERGIAS',profile.allergies],['ESTADO CIVIL',profile.civil],['DOMICILIO ACTUAL',profile.address],['NÚMERO Y NOMBRE DE LOS HIJOS',profile.children],['NOMBRE DE LA ESPOSA(O)',profile.spouse],['NOMBRE DE LOS PADRES',profile.parents],['DOMICILIO DE LOS PADRES',profile.parentsAddress],['CELULAR / ALTERNO / REFERENCIA',`${profile.phone} / ${profile.alternate} / ${profile.reference}`],['CORREO ELECTRÓNICO',profile.email],['EN CASO DE EMERGENCIA LLAMAR A',profile.emergency]].map(([label,value]) => `<p><b>${label}:</b><span>${escapeOfficial(value)}</span></p>`).join('')}</div><div class="filiation-signature"><span></span><strong>FIRMA DEL INTERESADO</strong></div><footer>DOCUMENTO DEMOSTRATIVO · DATOS FICTICIOS</footer></article>`; }
+function renderFiliationPreview() { const profile = filiationProfiles[document.getElementById('filiation-profile').value] || filiationProfiles['001']; document.getElementById('filiation-preview').innerHTML = filiationMarkup(profile); }
+document.getElementById('filiation-profile').innerHTML = Object.entries(filiationProfiles).map(([id, profile]) => `<option value="${id}">${escapeOfficial(profile.name)}</option>`).join('');
+document.getElementById('filiation-profile').addEventListener('change', renderFiliationPreview);
+document.getElementById('filiation-print').addEventListener('click', () => { clearOfficialRecordPrints(); const profile = filiationProfiles[document.getElementById('filiation-profile').value]; document.getElementById('official-filiation-print').innerHTML = filiationMarkup(profile, true); document.body.classList.add('printing-official-record'); window.setTimeout(() => window.print(), 80); });
+renderFiliationPreview();
 
 // Memorándums de felicitación
 const congratsStorageKey = 'simu_demo_felicitacion_v1';
@@ -1265,6 +1374,10 @@ function readInternalAlerts() { try { const value = JSON.parse(localStorage.getI
 function writeInternalAlerts(alerts) { localStorage.setItem(alertsStorageKey, JSON.stringify(alerts)); renderInternalAlerts(); }
 function currentAlertIdentity() {
   if (currentViewId === 'coordinacion') return currentCoordinationOrigin;
+  if (currentViewId === 'comandante') return 'Comandante';
+  if (currentViewId === 'jpm') return 'Jefe de la Plana Mayor';
+  if (['p1', 'p1-funcion', 'p1-registro', 'vacaciones', 'relaciones', 'filiaciones', 'hoja-vida', 'felicitaciones', 'radiogramas', 'cuadros', 'tropa', 'memorandums'].includes(currentViewId)) return 'P-1 Personal';
+  if (currentViewId === 'portal') return 'Personal de la Unidad';
   const role = sessionRoleText();
   if (/comandante/.test(role)) return 'Comandante';
   if (/jefe de la plana mayor|jpm/.test(role)) return 'Jefe de la Plana Mayor';
@@ -1282,7 +1395,7 @@ function createInternalAlert({ source, audience, type, subject, priority = 'Info
   localStorage.setItem(alertsStorageKey, JSON.stringify(alerts));
   renderInternalAlerts();
 }
-function eligibleAlert(alert) { const identity = currentAlertIdentity(); return alert.audience === identity || alert.audience === 'Todo el personal'; }
+function eligibleAlert(alert) { const identity = currentAlertIdentity(); return alert.audience === identity || (alert.audience === 'Todo el personal' && identity === 'Personal de la Unidad'); }
 function acknowledgementFor(alert) { const user = alertUserLabel(); return (alert.acknowledgements || []).find(item => item.user === user); }
 function updateAlertAcknowledgement(id, updates) {
   const alerts = readInternalAlerts(); const alert = alerts.find(item => item.id === id); if (!alert) return;

@@ -198,8 +198,8 @@
 
       <section id="vacaciones" class="view">
         <div class="module-heading">
-          <div><p class="eyebrow">CONSULTA INDIVIDUAL</p><h2>Reporte individual de vacaciones</h2><p>Consulta personal del rol, saldo disponible y movimientos de vacaciones.</p></div>
-          <div class="directive-badges"><button id="vacation-return" class="text-button" type="button">Volver al portal</button><button id="vacation-print" class="primary-button" type="button">Imprimir reporte individual</button><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
+          <div><p id="vacation-eyebrow" class="eyebrow">CONSULTA INDIVIDUAL</p><h2 id="vacation-heading">Reporte individual de vacaciones</h2><p id="vacation-description">Consulta personal del rol, saldo disponible y movimientos de vacaciones.</p></div>
+          <div class="directive-badges"><button id="vacation-return" class="text-button" type="button">Volver al portal</button><label id="vacation-report-type-wrap" class="compact-select" hidden>Reporte<select id="vacation-report-type"><option value="consolidated">Consolidado</option><option value="individual">Individual</option></select></label><button id="vacation-print" class="primary-button" type="button">Imprimir reporte individual</button><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
         </div>
 
         <div class="privacy-banner">
@@ -227,10 +227,16 @@
           </label>
         </div>
 
+        <form id="vacation-admin-form" class="panel vacation-admin-form" hidden>
+          <div class="panel-title"><div><p class="eyebrow">ADMINISTRACIÓN P-1</p><h3>Registrar vacación, permiso o compensación</h3></div><span id="vacation-efficiency-warning" class="badge directive">Permanencia mínima: 75 %</span></div>
+          <div class="record-grid four"><label>Tipo<select id="vacation-movement-type"><option>Vacación</option><option>Permiso</option><option>Compensación</option></select></label><label>Fecha de inicio<input id="vacation-start" type="date" required></label><label>Fecha de finalización<input id="vacation-end" type="date" required></label><label>Cantidad de días<input id="vacation-days" type="number" min="1" value="1" required></label><label>Motivo o referencia<input id="vacation-reference" required></label><label>Estado<select id="vacation-state"><option>Solicitado</option><option>Autorizado</option><option>Concluido</option><option>Anulado</option></select></label><label>Autoridad que autoriza<input id="vacation-authority" value="Comandante de la Unidad" required></label><label>Observaciones<input id="vacation-observation" placeholder="Sin observaciones"></label></div>
+          <div class="record-actions"><button class="primary-button" type="submit">Registrar y actualizar reportes</button></div>
+        </form>
+
         <div class="personal-header">
           <div class="avatar" id="profile-initials">AR</div>
           <div><p class="eyebrow">MI SITUACIÓN</p><h3 id="profile-name">Cap. Ana Rojas</h3><span id="profile-unit">Compañía de Comando</span></div>
-          <div class="personal-status"><span>Estado actual</span><strong>Disponible</strong></div>
+          <div class="personal-status"><span>Estado actual</span><strong id="profile-current-status">Disponible</strong></div>
         </div>
 
         <div class="vacation-metrics">
@@ -396,7 +402,7 @@
               <span class="g1-number">05</span><div><strong>Administración interna</strong><small>Planes, informes, radiogramas y oficios.</small></div><i>4 áreas</i>
             </button>
             <button class="g1-card" data-g1="varios">
-              <span class="g1-number">06</span><div><strong>Varios</strong><small>Publicación de disposiciones generales.</small></div><i>1 área</i>
+              <span class="g1-number">06</span><div><strong>Publicación de disposiciones</strong><small>Carga y difusión de disposiciones generales.</small></div><i>1 área</i>
             </button>
           </div>
         </section>
@@ -430,20 +436,25 @@
         <div class="memorandum-privacy"><strong>Información reservada</strong><span>El prototipo utiliza identidades ficticias. La versión institucional requerirá acceso restringido y almacenamiento seguro.</span></div>
 
         <article class="panel nominal-block">
-          <div class="panel-title"><div><p class="eyebrow">ORGANIZACIÓN</p><h3>Armas y especialidades</h3></div><span id="nominal-total" class="badge green">0 registros</span></div>
-          <div id="nominal-tabs" class="nominal-tabs" role="tablist" aria-label="Armas y especialidades"></div>
+          <div class="panel-title"><div><p class="eyebrow">ORGANIZACIÓN</p><h3>Vistas de la relación nominal</h3></div><span id="nominal-total" class="badge green">0 registros</span></div>
+          <div class="nominal-view-controls"><label>Organizar por<select id="nominal-view-mode"><option value="alphabetical">Orden alfabético</option><option value="seniority">Antigüedad</option><option value="section">Armas y especialidades</option><option value="echelon">Escalafón</option><option value="unit">Unidad o dependencia</option></select></label><label>Filtro<select id="nominal-group-filter"><option value="all">Todos</option></select></label><label>Buscar<input id="nominal-search" type="search" placeholder="Nombre o grado"></label><label>Orden<select id="nominal-direction"><option value="asc">Ascendente</option><option value="desc">Descendente</option></select></label></div>
+          <div id="nominal-tabs" class="nominal-tabs" role="tablist" aria-label="Armas y especialidades" hidden></div>
         </article>
 
         <article class="panel nominal-block">
           <div class="panel-title"><div><p class="eyebrow">REGISTRO NOMINAL</p><h3 id="nominal-section-title">Infantería</h3></div><span class="badge">Datos ficticios</span></div>
-          <form id="nominal-entry-form" class="nominal-entry-form">
+          <form id="nominal-entry-form" class="nominal-entry-form expanded">
             <label>Grado<input id="nominal-rank" type="text" placeholder="Ej.: Al. 2do. AM. INF." required /></label>
             <label>Apellidos y nombres<input id="nominal-name" type="text" placeholder="Identidad demostrativa" required /></label>
+            <label>Antigüedad<input id="nominal-seniority" type="number" min="1" value="1" required /></label>
+            <label>Arma o especialidad<select id="nominal-section-input"><option value="infanteria">Infantería</option><option value="caballeria">Caballería</option><option value="artilleria">Artillería</option><option value="ingenieria">Ingeniería</option><option value="comunicaciones">Comunicaciones</option><option value="material_belico">Material Bélico</option><option value="motores">Motores</option><option value="intendencia">Intendencia</option><option value="sanidad">Sanidad</option></select></label>
+            <label>Escalafón<select id="nominal-echelon"><option>Oficiales</option><option>Suboficiales y Sargentos</option><option>Tropa</option><option>Empleados Civiles</option></select></label>
+            <label>Unidad o dependencia<input id="nominal-unit" value="Compañía de Comando" required /></label>
             <label>Observaciones<input id="nominal-observation" type="text" placeholder="Sin novedad" /></label>
             <button class="primary-button" type="submit">Agregar personal</button>
           </form>
           <div class="nominal-table-wrap">
-            <table class="nominal-table"><thead><tr><th>N.º</th><th>Grado</th><th>Apellidos y nombres</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody id="nominal-records"></tbody></table>
+            <table class="nominal-table"><thead><tr><th>N.º</th><th>Grado</th><th>Apellidos y nombres</th><th>Antigüedad</th><th>Arma/Esp.</th><th>Escalafón</th><th>Dependencia</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody id="nominal-records"></tbody></table>
           </div>
         </article>
 
@@ -461,9 +472,17 @@
           <div class="record-grid four"><label>Fotografía<input id="life-photo" type="file" accept="image/*"></label><label>Grado y arma<input id="life-rank" value="Cap. Inf." required></label><label>Apellidos<input id="life-lastname" value="Personal demostrativo" required></label><label>Nombres<input id="life-name" value="Ejemplo" required></label><label>Cédula de identidad<input id="life-id" value="0000000 DEMO" required></label></div>
           <div class="panel-title compact"><div><p class="eyebrow">02 · ANTECEDENTES</p><h3>Registros de la hoja de vida</h3></div><button id="life-add-row" class="text-button" type="button">+ Agregar antecedente</button></div>
           <div class="life-table-wrap"><table class="record-table"><thead><tr><th>Tipo</th><th>Día</th><th>Mes</th><th>Año</th><th>Motivo o detalle</th><th>Impuesto por</th><th></th></tr></thead><tbody id="life-record-rows"></tbody></table></div>
-          <div class="record-actions"><button id="life-print" class="secondary-light-button" type="button">Imprimir hoja de vida</button><button id="life-archive" class="secondary-light-button" type="button">Guardar en historial</button><button class="primary-button" type="submit">Guardar borrador</button></div>
+          <div class="record-actions"><button id="life-print" class="secondary-light-button" type="button">Vista preliminar</button><button id="life-archive" class="secondary-light-button" type="button">Guardar en historial</button><button class="primary-button" type="submit">Guardar borrador</button></div>
         </form>
+        <article id="life-preview-panel" class="panel document-preview-panel" hidden><div class="panel-title"><div><p class="eyebrow">VISTA PRELIMINAR</p><h3>Hoja de vida preparada para impresión</h3></div><div class="record-actions"><button id="life-preview-close" class="text-button" type="button">Cerrar</button><button id="life-confirm-print" class="primary-button" type="button">Imprimir hoja de vida</button></div></div><div id="life-preview-content" class="document-preview-canvas"></div></article>
         <article class="panel record-history"><div class="panel-title"><div><p class="eyebrow">HISTORIAL</p><h3>Hojas guardadas</h3></div><span id="life-history-count" class="badge">0 registros</span></div><div id="life-history"></div></article>
+      </section>
+
+      <section id="filiaciones" class="view records-view">
+        <div class="module-heading"><div><p class="eyebrow">ADMINISTRACIÓN DEL PERSONAL</p><h2>Filiaciones personales</h2><p>Consulta e impresión del formato institucional de filiación.</p></div><button class="text-button" type="button" data-back-administration>← Volver a Administración del personal</button></div>
+        <div class="memorandum-privacy"><strong>Información reservada</strong><span>Solo el personal autorizado podrá consultar e imprimir una filiación.</span></div>
+        <article class="panel filiation-selector"><div><p class="eyebrow">SELECCIÓN DEL TITULAR</p><h3>Seleccione el nombre del personal</h3><p>La información se completa automáticamente desde el registro individual.</p></div><label>Personal<select id="filiation-profile"></select></label></article>
+        <article class="panel filiation-preview-panel"><div class="panel-title"><div><p class="eyebrow">VISTA PREVIA</p><h3>Filiación de datos personales</h3></div><button id="filiation-print" class="primary-button" type="button">Imprimir filiación</button></div><div id="filiation-preview" class="filiation-sheet-preview"></div></article>
       </section>
 
       <section id="felicitaciones" class="view records-view">
@@ -770,6 +789,7 @@
   <section id="official-vacation-report-print" class="official-vacation-report" aria-hidden="true"></section>
   <section id="official-nominal-report-print" class="official-nominal-report" aria-hidden="true"></section>
   <section id="official-life-report-print" class="official-record-print" aria-hidden="true"></section>
+  <section id="official-filiation-print" class="official-record-print" aria-hidden="true"></section>
   <section id="official-congratulations-print" class="official-record-print" aria-hidden="true"></section>
   <section id="official-radiogram-print" class="official-record-print" aria-hidden="true"></section>
 
