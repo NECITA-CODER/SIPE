@@ -107,3 +107,4 @@ body[data-user-role="g1"] .publication-panel[hidden],body[data-user-role="auxili
 .troop-row-actions{display:flex;align-items:center;gap:6px}
 .troop-table td:last-child .troop-save-button{border:0;background:#e6f0e8;color:var(--green2);border-radius:5px;width:auto;height:28px;padding:0 8px;cursor:pointer;font-size:8px;font-weight:800}
 .troop-table td:last-child .troop-delete-button{border:0;background:#efe6e2;color:var(--red);border-radius:50%;width:24px;height:24px;cursor:pointer;font-weight:800}
+.control-list>.p1-register-card{grid-column:1!important;grid-row:auto!important}
