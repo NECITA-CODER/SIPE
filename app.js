@@ -11,7 +11,7 @@ function showView(id, options = {}) {
   if (id !== currentViewId && !options.fromHistory) viewHistory.push(currentViewId);
   currentViewId = id;
   views.forEach(view => view.classList.toggle('active-view', view.id === id));
-  const activeNavigation = ['vacaciones', 'informacion'].includes(id) ? 'portal' : ['cuadros', 'tropa', 'memorandums'].includes(id) ? 'p1' : id;
+  const activeNavigation = id === 'informacion' && informationAccessMode === 'personal' ? 'portal' : ['vacaciones', 'cuadros', 'tropa', 'memorandums', 'p1-funcion', 'p1-registro'].includes(id) || (id === 'informacion' && informationAccessMode === 'p1') ? 'p1' : id;
   navItems.forEach(item => item.classList.toggle('active', item.dataset.view === activeNavigation));
   const pageTitles = {
     inicio: 'Inicio',
@@ -20,6 +20,8 @@ function showView(id, options = {}) {
     portal: 'Portal del Personal',
     vacaciones: 'Reporte individual de vacaciones',
     informacion: 'Disposiciones generales',
+    'p1-funcion': 'Funciones del P-1',
+    'p1-registro': 'Registro del P-1',
     cuadros: 'Parte del personal de cuadros',
     tropa: 'Parte diario del personal de tropa',
     memorandums: 'Memorándums de sanción'
@@ -48,17 +50,76 @@ document.querySelectorAll('[data-open-p1]').forEach(item => {
 });
 document.querySelectorAll('[data-open-jpm]').forEach(item => item.addEventListener('click', () => showView('jpm')));
 document.querySelectorAll('[data-open-portal]').forEach(item => item.addEventListener('click', () => showView('portal')));
-document.querySelectorAll('[data-open-vacations]').forEach(item => item.addEventListener('click', () => showView('vacaciones')));
-document.querySelectorAll('[data-open-info]').forEach(item => item.addEventListener('click', () => showView('informacion')));
+document.querySelectorAll('[data-open-vacations]').forEach(item => item.addEventListener('click', () => openVacationReport('personal')));
+document.querySelectorAll('[data-open-info]').forEach(item => item.addEventListener('click', () => openInformation('personal')));
 document.querySelectorAll('.locked, .chief-card:not(.operative)').forEach(item => item.addEventListener('click', () => notify(`${item.dataset.field}: módulo previsto para desarrollo futuro.`)));
 document.querySelectorAll('[data-demo]').forEach(item => item.addEventListener('click', () => notify('Esta función se habilitará en la siguiente etapa del SIPE.')));
 
+const informationStorageKey = 'simu_demo_disposiciones_v1';
+let informationAccessMode = 'personal';
 const generalInformationForm = document.getElementById('general-information-form');
 document.getElementById('information-date').value = new Date().toISOString().slice(0, 10);
+
+function readInformationPublications() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(informationStorageKey) || 'null');
+    if (Array.isArray(stored)) return stored;
+  } catch {}
+  return [
+    { type: 'Radiograma', subject: 'Disposición administrativa semanal', reference: 'RAD. DEMO. N.º 01/26', date: '2026-08-19', fileName: 'Documento demostrativo.pdf' },
+    { type: 'Comunicado', subject: 'Actividad general de la Unidad', reference: 'COM. DEMO. N.º 02/26', date: '2026-08-18', fileName: 'Documento demostrativo.pdf' }
+  ];
+}
+
+function renderInformationPublications() {
+  const publications = readInformationPublications();
+  const container = document.getElementById('information-rows');
+  container.innerHTML = publications.length ? publications.map((item, index) => `<article class="information-row"><div><span>${escapeOfficial(item.type)}</span><strong>${escapeOfficial(item.subject)}</strong><small>${escapeOfficial(item.reference)} · ${escapeOfficial(item.date)} · ${escapeOfficial(item.fileName || 'Sin archivo')}</small></div><div class="information-row-actions"><button type="button" data-consult-information="${index}">Consultar</button>${informationAccessMode === 'p1' ? `<button class="information-delete" type="button" data-delete-information="${index}">Retirar</button>` : ''}</div></article>`).join('') : '<p class="information-empty">No existen disposiciones publicadas.</p>';
+  container.querySelectorAll('[data-consult-information]').forEach(button => button.addEventListener('click', () => {
+    const item = publications[Number(button.dataset.consultInformation)];
+    notify(`${item.type}: ${item.subject}. Archivo registrado: ${item.fileName || 'sin archivo'}.`);
+  }));
+  container.querySelectorAll('[data-delete-information]').forEach(button => button.addEventListener('click', () => {
+    publications.splice(Number(button.dataset.deleteInformation), 1);
+    localStorage.setItem(informationStorageKey, JSON.stringify(publications));
+    renderInformationPublications();
+    notify('La disposición fue retirada del Portal del Personal.');
+  }));
+}
+
+function openInformation(mode = 'personal') {
+  informationAccessMode = mode;
+  const isP1 = mode === 'p1';
+  document.getElementById('information-admin-panel').hidden = !isP1;
+  document.getElementById('information-return').textContent = isP1 ? 'Volver a Diversos' : 'Volver al portal';
+  document.getElementById('information-return').onclick = () => isP1 ? renderG1Detail('diversos') : showView('portal');
+  setText('information-eyebrow', isP1 ? 'DIVERSOS · ADMINISTRACIÓN P-1' : 'DIFUSIÓN INTERNA');
+  setText('information-heading', isP1 ? 'Publicación de disposiciones' : 'Disposiciones generales');
+  setText('information-description', isP1 ? 'Cargue y administre la información autorizada para conocimiento del personal.' : 'Consulte las disposiciones publicadas por el P-1.');
+  setText('information-access-badge', isP1 ? 'Acceso P-1' : 'Consulta general');
+  renderInformationPublications();
+  showView('informacion');
+}
+
 generalInformationForm.addEventListener('submit', event => {
   event.preventDefault();
-  notify('Formulario preparado. La publicación compartida requiere activar Supabase Storage.');
+  const file = document.getElementById('information-file').files[0];
+  const publications = readInformationPublications();
+  publications.unshift({
+    type: document.getElementById('information-type').value,
+    subject: document.getElementById('information-subject').value.trim(),
+    reference: document.getElementById('information-reference').value.trim(),
+    date: document.getElementById('information-date').value,
+    fileName: file?.name || 'Sin archivo'
+  });
+  localStorage.setItem(informationStorageKey, JSON.stringify(publications));
+  generalInformationForm.reset();
+  document.getElementById('information-date').value = new Date().toISOString().slice(0, 10);
+  renderInformationPublications();
+  notify('Disposición publicada en el Portal del Personal.');
 });
+document.getElementById('information-return').onclick = () => showView('portal');
+renderInformationPublications();
 
 document.getElementById('current-date').textContent = new Intl.DateTimeFormat('es-BO', { day:'2-digit', month:'long', year:'numeric' }).format(new Date());
 
@@ -195,6 +256,45 @@ function renderProfile(profileId) {
 document.getElementById('profile-select').addEventListener('change', event => renderProfile(event.target.value));
 renderProfile('001');
 
+let vacationAccessMode = 'personal';
+
+function openVacationReport(mode = 'personal') {
+  vacationAccessMode = mode;
+  const isP1 = mode === 'p1';
+  const returnButton = document.getElementById('vacation-return');
+  returnButton.textContent = isP1 ? 'Volver al P-1' : 'Volver al portal';
+  returnButton.onclick = () => showView(isP1 ? 'p1' : 'portal');
+  document.getElementById('vacation-print').textContent = isP1 ? 'Imprimir reporte consolidado' : 'Imprimir reporte individual';
+  showView('vacaciones');
+}
+
+function vacationBalance(profile) {
+  return profile.annual - profile.collective - profile.used - profile.permits + profile.compensation;
+}
+
+function vacationReportDate() {
+  return new Intl.DateTimeFormat('es-BO', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date());
+}
+
+function buildVacationReport() {
+  const container = document.getElementById('official-vacation-report-print');
+  const profile = personnelProfiles[document.getElementById('profile-select').value];
+  const movements = profile.movements.map(row => `<tr>${row.map(cell => `<td>${escapeOfficial(cell)}</td>`).join('')}</tr>`).join('');
+  const consolidated = Object.values(personnelProfiles).map((item, index) => `<tr><td>${index + 1}</td><td>${escapeOfficial(item.name)}</td><td>${escapeOfficial(item.unit)}</td><td>${item.annual}</td><td>${item.used}</td><td>${item.permits}</td><td>${vacationBalance(item)}</td><td>${escapeOfficial(item.scheduleState)}</td></tr>`).join('');
+  const content = vacationAccessMode === 'p1'
+    ? `<h2>REPORTE CONSOLIDADO DE VACACIONES Y PERMISOS</h2><p class="vacation-report-scope">Administración del P-1 · Datos demostrativos</p><table><thead><tr><th>N.º</th><th>Personal</th><th>Dependencia</th><th>Derecho</th><th>Utilizado</th><th>Permisos</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>${consolidated}</tbody></table>`
+    : `<h2>REPORTE INDIVIDUAL DE VACACIONES</h2><p class="vacation-report-scope">Consulta autorizada del titular · Datos demostrativos</p><div class="vacation-report-person"><p><b>Personal:</b> ${escapeOfficial(profile.name)}</p><p><b>Dependencia:</b> ${escapeOfficial(profile.unit)}</p><p><b>Periodo programado:</b> ${escapeOfficial(profile.period)}</p><p><b>Estado:</b> ${escapeOfficial(profile.scheduleState)}</p></div><table><thead><tr><th>Derecho anual</th><th>Reserva colectiva</th><th>Utilizado</th><th>Permisos</th><th>Compensación</th><th>Saldo</th></tr></thead><tbody><tr><td>${profile.annual}</td><td>${profile.collective}</td><td>${profile.used}</td><td>${profile.permits}</td><td>${profile.compensation}</td><td>${vacationBalance(profile)}</td></tr></tbody></table><h3>HISTORIAL DE MOVIMIENTOS</h3><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Días</th><th>Efecto</th><th>Estado</th></tr></thead><tbody>${movements}</tbody></table>`;
+  container.innerHTML = `<article class="vacation-official-page"><header><div><strong>UNIDAD DEMOSTRATIVA</strong><strong>SECCIÓN I - PERSONAL</strong><u>BOLIVIA</u></div><div><b>SIMU</b><span>Fecha: ${vacationReportDate()}</span></div></header>${content}<div class="vacation-report-signatures"><div>RESPONSABLE P-1</div><div>INTERESADO</div></div><p class="vacation-report-warning">DOCUMENTO DEMOSTRATIVO - NO CONTIENE DATOS INSTITUCIONALES REALES</p></article>`;
+}
+
+document.getElementById('vacation-print').addEventListener('click', () => {
+  buildVacationReport();
+  document.body.classList.add('printing-official-vacation-report');
+  window.setTimeout(() => window.print(), 80);
+});
+window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-vacation-report'));
+document.getElementById('vacation-return').onclick = () => showView('portal');
+
 const g1Functions = {
   efectivos: {
     number: '01', title: 'Mantenimiento de efectivos', purpose: 'Concentrar y actualizar los partes del personal de la unidad.',
@@ -206,8 +306,9 @@ const g1Functions = {
   administracion: {
     number: '02', title: 'Administración del personal', purpose: 'Organizar los registros nominales y la documentación individual del personal.',
     areas: [
-      ['Relaciones nominales del personal', 'Nóminas organizadas por categoría, grado, dependencia y situación administrativa.'],
-      ['Filiaciones personales', 'Datos de identificación, antecedentes y documentación individual vinculada al legajo.']
+      { id: 'vacaciones', title: 'Vacaciones y permisos', description: 'Consulta administrativa, control de saldos y generación del reporte consolidado del personal.' },
+      { id: 'relaciones', title: 'Relaciones nominales del personal', description: 'Nóminas organizadas por categoría, grado, dependencia y situación administrativa.' },
+      { id: 'filiaciones', title: 'Filiaciones personales', description: 'Datos de identificación, antecedentes y documentación individual vinculada al legajo.' }
     ]
   },
   disciplina: {
@@ -219,37 +320,36 @@ const g1Functions = {
   moral: {
     number: '04', title: 'Incremento y mantenimiento de la moral', purpose: 'Registrar reconocimientos y controlar al personal considerado en los procesos de ascenso.',
     areas: [
-      ['Felicitaciones', 'Archivo de memorándums y antecedentes de felicitación vinculados al legajo individual.'],
-      ['Personal convocado a ascensos', 'Relación y seguimiento administrativo del personal convocado a procesos de ascenso.']
+      { id: 'felicitaciones', title: 'Memorándums de felicitación', description: 'Elaboración y archivo de reconocimientos vinculados al legajo individual.' },
+      { id: 'ascensos', title: 'Personal convocado a ascensos', description: 'Relación y seguimiento administrativo del personal convocado a procesos de ascenso.' }
     ]
   },
   pc: {
     number: '05', title: 'Administración interna', purpose: 'Organizar la documentación de planeamiento y los informes elaborados por el P-1.',
     areas: [
-      ['Planes de personal', 'Registro, consulta y archivo de planes administrativos correspondientes al área de personal.'],
-      ['Informes', 'Registro, consulta y archivo de informes periódicos y especiales de personal.']
+      { id: 'planes', title: 'Planes de personal', description: 'Registro, consulta y archivo de planes administrativos correspondientes al área de personal.' },
+      { id: 'informes', title: 'Informes', description: 'Registro, consulta y archivo de informes periódicos y especiales de personal.' },
+      { id: 'radiogramas', title: 'Radiogramas', description: 'Control de radiogramas recibidos y expedidos relacionados con personal.' },
+      { id: 'oficios', title: 'Oficios', description: 'Elaboración, registro y seguimiento de oficios de la Sección I - Personal.' }
     ]
   },
   diversos: {
-    number: '06', title: 'Diversos', purpose: 'Controlar la recepción y expedición de radiogramas relacionados con el área de personal.',
+    number: '06', title: 'Diversos', purpose: 'Publicar disposiciones y documentos autorizados para conocimiento del personal.',
     areas: [
-      ['Radiogramas recibidos', 'Registro de origen, número, fecha, asunto, prioridad, responsable y estado de atención.'],
-      ['Radiogramas expedidos', 'Registro de destino, número, fecha, asunto, prioridad y constancia de expedición.']
+      { id: 'disposiciones', title: 'Publicación de disposiciones generales', description: 'Carga y administración de documentos visibles desde el Portal del Personal.' }
     ]
   }
 };
 
+let activeP1Function = 'efectivos';
+
 function renderG1Detail(key) {
   const item = g1Functions[key];
+  activeP1Function = key;
   document.querySelectorAll('.g1-card').forEach(card => card.classList.toggle('active', card.dataset.g1 === key));
-  document.getElementById('g1-detail').innerHTML = `
-    <div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div>
-    <div class="g1-detail-grid g1-detail-single">
-      <div><h5>Registros de la función</h5><div class="control-list">${item.areas.map(area => {
-        const normalized = Array.isArray(area) ? { id: '', title: area[0], description: area[1] } : area;
-        return `<article><strong>${normalized.title}</strong><p>${normalized.description}</p><button data-register="${normalized.id}" data-register-title="${normalized.title}">Abrir registro</button></article>`;
-      }).join('')}</div></div>
-    </div>`;
+  setText('p1-function-title', item.title);
+  setText('p1-function-purpose', item.purpose);
+  document.getElementById('p1-function-detail').innerHTML = `<div class="g1-detail-head"><span>${item.number}</span><div><p class="eyebrow">FUNCIÓN SELECCIONADA</p><h4>${item.title}</h4><p>${item.purpose}</p></div></div><div class="g1-detail-grid g1-detail-single"><div><h5>Registros de la función</h5><div class="control-list">${item.areas.map(area => `<button class="p1-register-card" type="button" data-register="${area.id}" data-register-title="${area.title}" data-register-description="${area.description}"><span><strong>${area.title}</strong><small>${area.description}</small></span><b>Abrir registro →</b></button>`).join('')}</div></div></div>`;
   document.querySelectorAll('[data-register]').forEach(button => button.addEventListener('click', () => {
     if (button.dataset.register === 'cuadros') {
       showView('cuadros');
@@ -263,12 +363,29 @@ function renderG1Detail(key) {
       showView('memorandums');
       return;
     }
-    notify(`${button.dataset.registerTitle}: registro preparado para la siguiente fase.`);
+    if (button.dataset.register === 'vacaciones') {
+      openVacationReport('p1');
+      return;
+    }
+    if (button.dataset.register === 'disposiciones') {
+      openInformation('p1');
+      return;
+    }
+    openP1Record(button.dataset.registerTitle, button.dataset.registerDescription);
   }));
+  showView('p1-funcion');
 }
 
 document.querySelectorAll('.g1-card').forEach(card => card.addEventListener('click', () => renderG1Detail(card.dataset.g1)));
-renderG1Detail('efectivos');
+
+function openP1Record(recordTitle, description) {
+  setText('p1-register-title', recordTitle);
+  setText('p1-register-panel-title', recordTitle);
+  setText('p1-register-description', description);
+  showView('p1-registro');
+}
+
+document.getElementById('p1-register-return').addEventListener('click', () => renderG1Detail(activeP1Function));
 
 const cuadrosCategoryInputs = [...document.querySelectorAll('[data-cuadros-category]')];
 const cuadrosNoveltyInputs = [...document.querySelectorAll('[data-cuadros-novelty]')];

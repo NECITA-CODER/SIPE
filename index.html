@@ -182,7 +182,7 @@
       <section id="vacaciones" class="view">
         <div class="module-heading">
           <div><p class="eyebrow">CONSULTA INDIVIDUAL</p><h2>Reporte individual de vacaciones</h2><p>Consulta personal del rol, saldo disponible y movimientos de vacaciones.</p></div>
-          <div class="directive-badges"><button class="text-button" type="button" data-open-portal>Volver al portal</button><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
+          <div class="directive-badges"><button id="vacation-return" class="text-button" type="button">Volver al portal</button><button id="vacation-print" class="primary-button" type="button">Imprimir reporte individual</button><span class="badge green">Acceso demostrativo</span><span class="badge directive">Directiva N.º 05/26</span></div>
         </div>
 
         <div class="privacy-banner">
@@ -258,16 +258,16 @@
 
       <section id="informacion" class="view">
         <div class="module-heading">
-          <div><p class="eyebrow">DIFUSIÓN INTERNA</p><h2>Disposiciones generales</h2><p>Radiogramas, disposiciones y comunicados publicados por el P-1 para conocimiento del personal.</p></div>
-          <div class="directive-badges"><button class="text-button" type="button" data-open-portal>Volver al portal</button><span class="badge green">Consulta general</span></div>
+          <div><p id="information-eyebrow" class="eyebrow">DIFUSIÓN INTERNA</p><h2 id="information-heading">Disposiciones generales</h2><p id="information-description">Documentos publicados por el P-1 para conocimiento del personal.</p></div>
+          <div class="directive-badges"><button id="information-return" class="text-button" type="button">Volver al portal</button><span id="information-access-badge" class="badge green">Consulta general</span></div>
         </div>
 
         <div class="information-grid">
-          <article class="panel publication-panel">
-            <div class="panel-title"><div><p class="eyebrow">ADMINISTRACIÓN P-1</p><h3>Publicar disposición</h3></div><span class="badge directive">Acceso restringido</span></div>
+          <article id="information-admin-panel" class="panel publication-panel" hidden>
+            <div class="panel-title"><div><p class="eyebrow">ADMINISTRACIÓN P-1</p><h3>Publicar disposición general</h3></div><span class="badge directive">Acceso restringido</span></div>
             <form id="general-information-form" class="publication-form">
               <label>Tipo de documento
-                <select id="information-type" required><option value="Radiograma">Radiograma</option><option value="Disposición">Disposición</option><option value="Comunicado">Comunicado</option></select>
+                <select id="information-type" required><option value="Disposición">Disposición</option><option value="Radiograma">Radiograma</option><option value="Comunicado">Comunicado</option><option value="Oficio">Oficio</option></select>
               </label>
               <label>Asunto<input id="information-subject" type="text" maxlength="120" placeholder="Asunto para conocimiento del personal" required /></label>
               <label>Referencia<input id="information-reference" type="text" maxlength="80" placeholder="Número o referencia del documento" required /></label>
@@ -278,15 +278,12 @@
               </label>
               <button class="primary-button" type="submit">Publicar para el personal</button>
             </form>
-            <p class="storage-note">La publicación compartida se habilitará al conectar este formulario con el almacenamiento seguro de Supabase.</p>
+            <p class="storage-note">El prototipo conserva la publicación en este navegador. El archivo institucional requerirá almacenamiento seguro y permisos por rol.</p>
           </article>
 
           <article class="panel information-board">
             <div class="panel-title"><div><p class="eyebrow">PARA CONOCIMIENTO</p><h3>Documentos publicados</h3></div><span class="badge">Datos ficticios</span></div>
-            <div id="information-rows" class="information-list">
-              <article><div><span>Radiograma</span><strong>Disposición administrativa semanal</strong><small>RAD. DEMO. N.º 01/26 · 19-AGO-2026</small></div><button type="button" data-demo>Consultar</button></article>
-              <article><div><span>Comunicado</span><strong>Actividad general de la unidad</strong><small>COM. DEMO. N.º 02/26 · 18-AGO-2026</small></div><button type="button" data-demo>Consultar</button></article>
-            </div>
+            <div id="information-rows" class="information-list"></div>
           </article>
         </div>
       </section>
@@ -356,7 +353,7 @@
         <section class="g1-functions" aria-labelledby="g1-functions-title">
           <div class="section-heading">
             <div><p class="eyebrow">ESTADO MAYOR COORDINADOR</p><h3 id="g1-functions-title">Funciones y actividades específicas del G-1</h3></div>
-            <span class="doctrine-label">6 funciones · 11 áreas de control</span>
+            <span class="doctrine-label">6 funciones · 13 áreas de control</span>
           </div>
 
           <div class="g1-grid">
@@ -364,7 +361,7 @@
               <span class="g1-number">01</span><div><strong>Mantenimiento de efectivos</strong><small>Partes del personal de la unidad.</small></div><i>2 áreas</i>
             </button>
             <button class="g1-card" data-g1="administracion">
-              <span class="g1-number">02</span><div><strong>Administración del personal</strong><small>Relaciones nominales y filiaciones.</small></div><i>2 áreas</i>
+              <span class="g1-number">02</span><div><strong>Administración del personal</strong><small>Vacaciones, relaciones nominales y filiaciones.</small></div><i>3 áreas</i>
             </button>
             <button class="g1-card" data-g1="disciplina">
               <span class="g1-number">03</span><div><strong>Mantenimiento de la disciplina, ley y orden</strong><small>Control documental de sanciones.</small></div><i>1 área</i>
@@ -373,15 +370,33 @@
               <span class="g1-number">04</span><div><strong>Incremento y mantenimiento de la moral</strong><small>Felicitaciones y convocatorias a ascenso.</small></div><i>2 áreas</i>
             </button>
             <button class="g1-card" data-g1="pc">
-              <span class="g1-number">05</span><div><strong>Administración interna</strong><small>Planes e informes de personal.</small></div><i>2 áreas</i>
+              <span class="g1-number">05</span><div><strong>Administración interna</strong><small>Planes, informes, radiogramas y oficios.</small></div><i>4 áreas</i>
             </button>
             <button class="g1-card" data-g1="diversos">
-              <span class="g1-number">06</span><div><strong>Diversos</strong><small>Control de radiogramas.</small></div><i>2 áreas</i>
+              <span class="g1-number">06</span><div><strong>Diversos</strong><small>Publicación de disposiciones generales.</small></div><i>1 área</i>
             </button>
           </div>
-
-          <article class="g1-detail" id="g1-detail" aria-live="polite"></article>
         </section>
+      </section>
+
+      <section id="p1-funcion" class="view">
+        <div class="module-heading">
+          <div><p class="eyebrow">MÓDULO P-1 PERSONAL</p><h2 id="p1-function-title">Función seleccionada</h2><p id="p1-function-purpose"></p></div>
+          <button class="text-button" type="button" data-open-p1>Volver a funciones del P-1</button>
+        </div>
+        <article class="g1-detail p1-function-screen" id="p1-function-detail" aria-live="polite"></article>
+      </section>
+
+      <section id="p1-registro" class="view">
+        <div class="module-heading">
+          <div><p id="p1-register-eyebrow" class="eyebrow">REGISTRO P-1</p><h2 id="p1-register-title">Registro</h2><p id="p1-register-description"></p></div>
+          <button class="text-button" type="button" id="p1-register-return">Volver a la función</button>
+        </div>
+        <article class="panel p1-register-placeholder">
+          <span class="badge green">Estructura demostrativa</span>
+          <h3 id="p1-register-panel-title">Registro administrativo</h3>
+          <p>Este espacio está preparado para incorporar formularios, antecedentes, archivo e historial de acuerdo con el formato institucional correspondiente.</p>
+        </article>
       </section>
 
       <section id="cuadros" class="view cuadros-view">
@@ -642,6 +657,7 @@
   <section id="official-report-print" class="official-report" aria-hidden="true"></section>
   <section id="official-troop-report-print" class="official-troop-report" aria-hidden="true"></section>
   <section id="official-memorandum-print" class="official-memorandum" aria-hidden="true"></section>
+  <section id="official-vacation-report-print" class="official-vacation-report" aria-hidden="true"></section>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
