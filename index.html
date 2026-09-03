@@ -72,12 +72,21 @@
             <h1 id="page-title">Inicio</h1>
           </div>
         </div>
+        <div class="header-user-tools">
+          <button id="alerts-button" class="alerts-button" type="button" aria-expanded="false" aria-controls="alerts-panel"><span aria-hidden="true">●</span> Alertas <b id="alerts-count">0</b></button>
         <div class="user-panel">
           <span class="status-dot"></span>
           <div><strong id="session-user-name">Usuario autorizado</strong><small id="session-user-role">Sesión activa</small></div>
           <button id="logout-button" class="logout-button" type="button">Salir</button>
         </div>
+        </div>
       </header>
+
+      <aside id="alerts-panel" class="alerts-panel" hidden aria-label="Centro de alertas">
+        <div class="alerts-panel-head"><div><p class="eyebrow">CENTRO DE ALERTAS</p><h2>Novedades para conocimiento</h2></div><button id="alerts-close" type="button" aria-label="Cerrar alertas">×</button></div>
+        <div class="alerts-filter"><button class="active" type="button" data-alert-filter="pending">Pendientes</button><button type="button" data-alert-filter="all">Todas</button><button type="button" data-alert-filter="tracking">Seguimiento</button></div>
+        <div id="alerts-list" class="alerts-list"></div>
+      </aside>
 
       <section id="inicio" class="view active-view">
         <section class="system-identity" aria-labelledby="system-identity-title">
@@ -90,11 +99,11 @@
         </section>
 
         <section class="command-chain" aria-label="Estructura de conducción">
-          <div class="command-node commander-node">
+          <button class="command-node commander-node" type="button" data-open-commander>
             <span>NIVEL DE DECISIÓN</span>
             <strong>Comandante de la Unidad</strong>
             <small>Conduce y toma decisiones</small>
-          </div>
+          </button>
           <div class="chain-arrow" aria-hidden="true">↓</div>
           <button class="command-node chief-node" data-open-jpm>
             <span>NIVEL DE COORDINACIÓN</span>
@@ -115,11 +124,16 @@
             <div class="field-number">P-1</div>
             <div><span class="badge green">Operativo</span><h3>Jefe de Personal</h3></div>
           </article>
-          <article class="field-card"><div class="field-number">P-2</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Inteligencia</h3></div></article>
-          <article class="field-card"><div class="field-number">P-3</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Operaciones</h3></div></article>
-          <article class="field-card"><div class="field-number">P-4</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Logística</h3></div></article>
-          <article class="field-card"><div class="field-number">P-5</div><div><span class="badge">Desarrollo futuro</span><h3>Jefe de Asuntos Civiles</h3></div></article>
+          <button class="field-card coordination-access-card" type="button" data-open-coordination data-coordination-origin="P-2 Inteligencia"><div class="field-number">P-2</div><div><span class="badge green">Sala habilitada</span><h3>Jefe de Inteligencia</h3></div></button>
+          <button class="field-card coordination-access-card" type="button" data-open-coordination data-coordination-origin="P-3 Operaciones"><div class="field-number">P-3</div><div><span class="badge green">Sala habilitada</span><h3>Jefe de Operaciones</h3></div></button>
+          <button class="field-card coordination-access-card" type="button" data-open-coordination data-coordination-origin="P-4 Logística"><div class="field-number">P-4</div><div><span class="badge green">Sala habilitada</span><h3>Jefe de Logística</h3></div></button>
+          <button class="field-card coordination-access-card" type="button" data-open-coordination data-coordination-origin="P-5 Asuntos Civiles"><div class="field-number">P-5</div><div><span class="badge green">Sala habilitada</span><h3>Jefe de Asuntos Civiles</h3></div></button>
         </div>
+      </section>
+
+      <section id="comandante" class="view command-dashboard-view">
+        <div class="module-heading"><div><p class="eyebrow">NIVEL DE DECISIÓN</p><h2>Comandante de la Unidad</h2><p>Consulta la situación, establece prioridades y conduce las actividades de la Unidad.</p></div><span class="badge green">Mando</span></div>
+        <button class="command-coordination-window" type="button" data-open-coordination data-coordination-origin="Comandante"><span class="command-window-icon">SC</span><div><p class="eyebrow">COMUNICACIÓN DE MANDO</p><h3>Sala de Coordinación</h3><p>Remita disposiciones, radiogramas y comunicaciones al JPM o a cualquiera de los cinco campos de la conducción.</p></div><b>Ingresar →</b></button>
       </section>
 
       <section id="jpm" class="view">
@@ -141,7 +155,7 @@
             <button class="chief-card" data-field="P-4 Logística"><span>P-4</span><strong>Jefe de Logística</strong><small>Desarrollo futuro</small></button>
             <button class="chief-card" data-field="P-5 Asuntos Civiles"><span>P-5</span><strong>Jefe de Asuntos Civiles</strong><small>Desarrollo futuro</small></button>
           </div>
-          <button id="open-coordination-room" class="coordination-room-entry" type="button">
+          <button id="open-coordination-room" class="coordination-room-entry" type="button" data-open-coordination data-coordination-origin="Jefe de la Plana Mayor">
             <span>COORDINACIÓN INTERNA</span><strong>Sala de Coordinación</strong><small>Intercambio documental entre los cinco campos y convocatoria general.</small><b>Ingresar →</b>
           </button>
         </div>
@@ -272,6 +286,9 @@
               <label>Tipo de documento
                 <select id="information-type" required><option value="Disposición">Disposición</option><option value="Radiograma">Radiograma</option><option value="Comunicado">Comunicado</option><option value="Oficio">Oficio</option></select>
               </label>
+              <label>Confirmación requerida
+                <select id="information-requirement"><option value="knowledge">Solo conocimiento</option><option value="conformity">Conocimiento y conformidad</option></select>
+              </label>
               <label>Asunto<input id="information-subject" type="text" maxlength="120" placeholder="Asunto para conocimiento del personal" required /></label>
               <label>Referencia<input id="information-reference" type="text" maxlength="80" placeholder="Número o referencia del documento" required /></label>
               <label>Fecha<input id="information-date" type="date" required /></label>
@@ -360,6 +377,9 @@
           </div>
 
           <div class="g1-grid">
+            <button class="coordination-g1-card" type="button" data-open-coordination data-coordination-origin="P-1 Personal">
+              <span class="g1-number">SC</span><div><strong>Sala de Coordinación</strong><small>Intercambio de información con el Comandante, JPM y los campos de la conducción.</small></div><i>Acceso directo</i>
+            </button>
             <button class="g1-card active" data-g1="efectivos">
               <span class="g1-number">01</span><div><strong>Mantenimiento de efectivos</strong><small>Partes del personal de la unidad.</small></div><i>2 áreas</i>
             </button>
@@ -472,11 +492,11 @@
         </section>
       </section>
 
-      <section id="coordinacion" class="view records-view">
-        <div class="module-heading"><div><p class="eyebrow">ACCESO RESTRINGIDO · PLANA MAYOR</p><h2>Sala de Coordinación</h2><p>Intercambio documental para conocimiento entre los campos de la conducción.</p></div><button class="text-button" type="button" data-open-jpm>← Volver al Jefe de la Plana Mayor</button></div>
+      <section id="coordinacion" class="view records-view coordination-room-view">
+        <div class="coordination-hero"><div class="coordination-hero-mark">SC</div><div><p class="eyebrow">RED INTERNA DE MANDO Y COORDINACIÓN</p><h2>Sala de Coordinación</h2><p>Intercambio documental para conocimiento entre el Comandante, JPM y los cinco campos de la conducción.</p></div><button class="coordination-exit" type="button" id="coordination-return">← Volver</button></div>
         <div class="memorandum-privacy"><strong>No reemplaza órdenes ni el conducto regular</strong><span>Acceso exclusivo del Comandante, Jefe de la Plana Mayor y P-1 a P-5.</span></div>
         <div class="coordination-workspace">
-          <form id="coordination-form" class="panel record-form"><div class="panel-title"><div><p class="eyebrow">NUEVA COORDINACIÓN</p><h3>Comunicación entre dos campos</h3></div><span class="badge green">Trazable</span></div><div class="record-grid three"><label>Campo de origen<select id="coord-origin"><option>P-1 Personal</option><option>P-2 Inteligencia</option><option>P-3 Operaciones</option><option>P-4 Logística</option><option>P-5 Asuntos Civiles</option></select></label><label>Campo destinatario<select id="coord-destination"><option>P-2 Inteligencia</option><option>P-1 Personal</option><option>P-3 Operaciones</option><option>P-4 Logística</option><option>P-5 Asuntos Civiles</option></select></label><label>Prioridad<select id="coord-priority"><option>Normal</option><option>Urgente</option><option>Inmediata</option></select></label><label>Asunto<input id="coord-subject" required></label><label>Fecha y hora<input id="coord-datetime" type="datetime-local" required></label><label>Adjunto<input id="coord-file" type="file"></label></div><label>Información para conocimiento<textarea id="coord-message" rows="5" required></textarea></label><div class="record-actions"><button class="primary-button" type="submit">Registrar coordinación</button></div></form>
+          <form id="coordination-form" class="panel record-form coordination-compose"><div class="panel-title"><div><p class="eyebrow">NUEVA COORDINACIÓN</p><h3>Remitir información</h3></div><span class="badge green">Trazable</span></div><div class="coordination-route"><label>Origen<select id="coord-origin"></select></label><span aria-hidden="true">→</span><label>Destinatario<select id="coord-destination"></select></label></div><div class="record-grid three"><label>Prioridad<select id="coord-priority"><option>Informativa</option><option>Importante</option><option>Inmediata</option></select></label><label>Confirmación requerida<select id="coord-requirement"><option value="knowledge">Solo conocimiento</option><option value="conformity">Conocimiento y conformidad</option></select></label><label>Fecha y hora<input id="coord-datetime" type="datetime-local" required></label><label>Asunto<input id="coord-subject" required></label><label>Tipo de información<select id="coord-document-type"><option>Coordinación</option><option>Disposición</option><option>Radiograma</option><option>Comunicado</option></select></label><label>Adjunto<input id="coord-file" type="file"></label></div><label>Información para conocimiento<textarea id="coord-message" rows="5" required></textarea></label><div class="record-actions"><button class="primary-button" type="submit">Registrar y alertar al destinatario</button></div></form>
           <article class="panel meeting-panel"><div class="panel-title"><div><p class="eyebrow">COMANDANTE / JPM</p><h3>Reunión general inmediata</h3></div><span class="badge directive">P-1 a P-5</span></div><label>Asunto<input id="meeting-subject" placeholder="Asunto de la reunión"></label><label>Enlace seguro de Google Meet<input id="meeting-link" type="url" placeholder="https://meet.google.com/..."></label><p>En el prototipo se registra un enlace autorizado. La creación automática requerirá Google Workspace, Calendar y OAuth institucional.</p><button id="meeting-create" class="primary-button" type="button">Convocar reunión general</button></article>
         </div>
         <article class="panel record-history"><div class="panel-title"><div><p class="eyebrow">SEGUIMIENTO</p><h3>Coordinaciones registradas</h3></div><span id="coordination-count" class="badge">0 registros</span></div><div id="coordination-history"></div></article>
