@@ -77,7 +77,15 @@ function openCoordinationRoom(origin) {
   document.getElementById('coordination-channel').hidden = true;
   showView('coordinacion');
 }
-document.querySelectorAll('[data-open-coordination]').forEach(item => item.addEventListener('click', () => openCoordinationRoom(item.dataset.coordinationOrigin)));
+const futureCoordinationModules = new Set(['P-2 Inteligencia', 'P-3 Operaciones', 'P-4 Logística', 'P-5 Asuntos Civiles']);
+document.querySelectorAll('[data-open-coordination]').forEach(item => item.addEventListener('click', () => {
+  const origin = item.dataset.coordinationOrigin;
+  if (futureCoordinationModules.has(origin)) {
+    notify(`${origin}: módulo pendiente de desarrollo. Será habilitado en una futura actualización.`);
+    return;
+  }
+  openCoordinationRoom(origin);
+}));
 document.getElementById('coordination-return').addEventListener('click', () => goBackView(currentCoordinationOrigin === 'Comandante' ? 'comandante' : currentCoordinationOrigin === 'Jefe de la Plana Mayor' ? 'jpm' : currentCoordinationOrigin === 'P-1 Personal' ? 'p1' : 'inicio'));
 document.getElementById('coordination-directory-return').addEventListener('click', () => { currentCoordinationDestination = ''; document.getElementById('coordination-directory').hidden = false; document.getElementById('coordination-channel').hidden = true; renderCoordinationDirectory(); });
 document.querySelectorAll('[data-open-portal]').forEach(item => item.addEventListener('click', () => showView('portal')));
