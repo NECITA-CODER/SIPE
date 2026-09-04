@@ -124,6 +124,7 @@ function renderInformationPublications() {
   container.querySelectorAll('[data-delete-information]').forEach(button => button.addEventListener('click', () => {
     publications.splice(Number(button.dataset.deleteInformation), 1);
     localStorage.setItem(informationStorageKey, JSON.stringify(publications));
+    scheduleSharedStateWrite('publicaciones', informationStorageKey);
     renderInformationPublications();
     notify('La disposición fue retirada del Portal del Personal.');
   }));
@@ -175,6 +176,7 @@ generalInformationForm.addEventListener('submit', event => {
   if (editingInformationIndex === null) publications.unshift(publication);
   else publications[editingInformationIndex] = publication;
   localStorage.setItem(informationStorageKey, JSON.stringify(publications));
+  scheduleSharedStateWrite('publicaciones', informationStorageKey);
   const wasEditing = editingInformationIndex !== null;
   if (!wasEditing) createInternalAlert({ source: 'P-1 Personal', audience: 'Todo el personal', type: publication.type, subject: publication.subject, priority: 'Informativa', requirement: publication.requirement, reference: publication.reference });
   resetInformationForm();
@@ -1371,20 +1373,86 @@ function renderCoordinationHistory() {
   const indexedRows = allRows.map((item, index) => ({ item, index })).filter(({ item }) => !currentCoordinationDestination || (currentCoordinationDestination === coordinationAllStaff ? item.origin === currentCoordinationOrigin : ((item.origin === currentCoordinationOrigin && item.destination === currentCoordinationDestination) || (item.origin === currentCoordinationDestination && item.destination === currentCoordinationOrigin))));
   setText('coordination-count', `${indexedRows.length} registros`);
   document.getElementById('coordination-history').innerHTML = indexedRows.length ? indexedRows.map(({ item, index }) => `<article class="coordination-thread"><div><span>${escapeOfficial(item.origin)} → ${escapeOfficial(item.destination)}</span><strong>${escapeOfficial(item.subject)}</strong><p>${escapeOfficial(item.message)}</p>${item.response ? `<p><b>Respuesta:</b> ${escapeOfficial(item.response)}</p>` : ''}<small>${escapeOfficial(item.datetime)} · ${escapeOfficial(item.priority)} · ${escapeOfficial(item.fileName || 'Sin adjunto')}</small></div><div class="coordination-controls"><label>Estado<select data-coord-status="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}><option${item.status === 'Pendiente' ? ' selected' : ''}>Pendiente</option><option${item.status === 'Recibida' ? ' selected' : ''}>Recibida</option><option${item.status === 'Respondida' ? ' selected' : ''}>Respondida</option><option${item.status === 'Cerrada' ? ' selected' : ''}>Cerrada</option></select></label><label>Respuesta<textarea data-coord-response="${index}" rows="2"${item.status === 'Cerrada' ? ' disabled' : ''}>${escapeOfficial(item.response || '')}</textarea></label><button type="button" data-coord-save="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}>Guardar respuesta</button></div></article>`).join('') : '<p>No existen coordinaciones registradas con este destinatario.</p>';
-  document.querySelectorAll('[data-coord-status]').forEach(select => select.addEventListener('change', () => { const rows = readList(coordinationKey); rows[Number(select.dataset.coordStatus)].status = select.value; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); }));
-  document.querySelectorAll('[data-coord-save]').forEach(button => button.addEventListener('click', () => { const rows = readList(coordinationKey); const index = Number(button.dataset.coordSave); rows[index].response = document.querySelector(`[data-coord-response="${index}"]`).value.trim(); if (rows[index].response) rows[index].status = 'Respondida'; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); notify('Respuesta registrada.'); }));
+  document.querySelectorAll('[data-coord-status]').forEach(select => select.addEventListener('change', () => { const rows = readList(coordinationKey); rows[Number(select.dataset.coordStatus)].status = select.value; localStorage.setItem(coordinationKey, JSON.stringify(rows)); scheduleSharedStateWrite('coordinaciones', coordinationKey); renderCoordinationHistory(); }));
+  document.querySelectorAll('[data-coord-save]').forEach(button => button.addEventListener('click', () => { const rows = readList(coordinationKey); const index = Number(button.dataset.coordSave); rows[index].response = document.querySelector(`[data-coord-response="${index}"]`).value.trim(); if (rows[index].response) rows[index].status = 'Respondida'; localStorage.setItem(coordinationKey, JSON.stringify(rows)); scheduleSharedStateWrite('coordinaciones', coordinationKey); renderCoordinationHistory(); notify('Respuesta registrada.'); }));
 }
 function renderCoordinationHistoryLegacy() { const rows = readList(coordinationKey); setText('coordination-count', `${rows.length} registros`); document.getElementById('coordination-history').innerHTML = rows.length ? rows.map((item, index) => `<article class="coordination-thread"><div><span>${escapeOfficial(item.origin)} → ${escapeOfficial(item.destination)}</span><strong>${escapeOfficial(item.subject)}</strong><p>${escapeOfficial(item.message)}</p>${item.response ? `<p><b>Respuesta:</b> ${escapeOfficial(item.response)}</p>` : ''}<small>${escapeOfficial(item.datetime)} · ${escapeOfficial(item.priority)} · ${escapeOfficial(item.fileName || 'Sin adjunto')}</small></div><div class="coordination-controls"><label>Estado<select data-coord-status="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}><option${item.status === 'Pendiente' ? ' selected' : ''}>Pendiente</option><option${item.status === 'Recibida' ? ' selected' : ''}>Recibida</option><option${item.status === 'Respondida' ? ' selected' : ''}>Respondida</option><option${item.status === 'Cerrada' ? ' selected' : ''}>Cerrada</option></select></label><label>Respuesta<textarea data-coord-response="${index}" rows="2"${item.status === 'Cerrada' ? ' disabled' : ''}>${escapeOfficial(item.response || '')}</textarea></label><button type="button" data-coord-save="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}>Guardar respuesta</button></div></article>`).join('') : '<p>No existen coordinaciones registradas.</p>'; document.querySelectorAll('[data-coord-status]').forEach(select => select.addEventListener('change', () => { const rows = readList(coordinationKey); rows[Number(select.dataset.coordStatus)].status = select.value; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); })); document.querySelectorAll('[data-coord-save]').forEach(button => button.addEventListener('click', () => { const rows = readList(coordinationKey); const index = Number(button.dataset.coordSave); rows[index].response = document.querySelector(`[data-coord-response="${index}"]`).value.trim(); if (rows[index].response) rows[index].status = 'Respondida'; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); notify('Respuesta registrada.'); })); }
 document.getElementById('coord-destination').addEventListener('change', event => { currentCoordinationDestination = event.target.value; setText('coordination-channel-title', `${currentCoordinationOrigin} ↔ ${currentCoordinationDestination}`); renderCoordinationHistory(); });
-document.getElementById('coordination-form').addEventListener('submit', event => { event.preventDefault(); const origin = document.getElementById('coord-origin').value; const destination = document.getElementById('coord-destination').value; if (origin === destination) return notify('Seleccione un destinatario diferente al origen.'); const file = document.getElementById('coord-file').files[0]; const priority = document.getElementById('coord-priority').value; const subject = document.getElementById('coord-subject').value; const requirement = document.getElementById('coord-requirement').value; const documentType = document.getElementById('coord-document-type').value; const datetime = document.getElementById('coord-datetime').value; const message = document.getElementById('coord-message').value; const targets = destination === coordinationAllStaff ? coordinationParticipants.filter(item => item !== origin) : [destination]; const rows = readList(coordinationKey); targets.slice().reverse().forEach(target => { rows.unshift({ origin, destination: target, priority, subject, requirement, documentType, datetime, message, fileName: file?.name || '', status: 'Pendiente' }); createInternalAlert({ source: origin, audience: target, type: documentType, subject, priority, requirement, reference: file?.name || 'Sin adjunto' }); }); localStorage.setItem(coordinationKey, JSON.stringify(rows)); event.target.reset(); document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16); openCoordinationChannel(destination); notify(destination === coordinationAllStaff ? 'Coordinación registrada y alertas enviadas a toda la Plana Mayor.' : 'Coordinación registrada y alerta enviada al destinatario.'); });
+document.getElementById('coordination-form').addEventListener('submit', event => { event.preventDefault(); const origin = document.getElementById('coord-origin').value; const destination = document.getElementById('coord-destination').value; if (origin === destination) return notify('Seleccione un destinatario diferente al origen.'); const file = document.getElementById('coord-file').files[0]; const priority = document.getElementById('coord-priority').value; const subject = document.getElementById('coord-subject').value; const requirement = document.getElementById('coord-requirement').value; const documentType = document.getElementById('coord-document-type').value; const datetime = document.getElementById('coord-datetime').value; const message = document.getElementById('coord-message').value; const targets = destination === coordinationAllStaff ? coordinationParticipants.filter(item => item !== origin) : [destination]; const rows = readList(coordinationKey); targets.slice().reverse().forEach(target => { rows.unshift({ origin, destination: target, priority, subject, requirement, documentType, datetime, message, fileName: file?.name || '', status: 'Pendiente' }); createInternalAlert({ source: origin, audience: target, type: documentType, subject, priority, requirement, reference: file?.name || 'Sin adjunto' }); }); localStorage.setItem(coordinationKey, JSON.stringify(rows)); scheduleSharedStateWrite('coordinaciones', coordinationKey); event.target.reset(); document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16); openCoordinationChannel(destination); notify(destination === coordinationAllStaff ? 'Coordinación registrada y alertas enviadas a toda la Plana Mayor.' : 'Coordinación registrada y alerta enviada al destinatario.'); });
 document.getElementById('meeting-create').addEventListener('click', () => { if (!canConveneMeeting()) return notify('Solo el Comandante o el Jefe de la Plana Mayor puede convocar la reunión general.'); const subject = document.getElementById('meeting-subject').value.trim(); const link = document.getElementById('meeting-link').value.trim(); if (!subject || !/^https:\/\/meet\.google\.com\//i.test(link)) return notify('Ingrese el asunto y un enlace válido de Google Meet.'); coordinationParticipants.filter(item => item !== currentCoordinationOrigin).forEach(audience => createInternalAlert({ source: currentCoordinationOrigin, audience, type: 'Reunión general', subject, priority: 'Inmediata', requirement: 'knowledge', reference: link })); notify('Reunión general registrada y alertas enviadas a los participantes.'); window.open(link, '_blank', 'noopener'); });
 renderCoordinationHistory();
 
 // Alertas internas, constancia de conocimiento y conformidad
 const alertsStorageKey = 'simu_demo_alertas_v1';
 let activeAlertFilter = 'pending';
+const sharedStateTable = 'simu_shared_state';
+const sharedStateScopes = {
+  publicaciones: informationStorageKey,
+  alertas: alertsStorageKey,
+  coordinaciones: coordinationKey
+};
+const sharedStateWriteTimers = new Map();
+let sharedStateWarningShown = false;
+
+function renderSharedStateScope(scope) {
+  if (scope === 'publicaciones') renderInformationPublications();
+  if (scope === 'alertas') renderInternalAlerts();
+  if (scope === 'coordinaciones') {
+    if (currentViewId === 'coordinacion' && !document.getElementById('coordination-directory').hidden) renderCoordinationDirectory();
+    if (currentViewId === 'coordinacion' && !document.getElementById('coordination-channel').hidden) renderCoordinationHistory();
+  }
+}
+
+function applySharedState(scope, payload) {
+  const storageKey = sharedStateScopes[scope];
+  if (!storageKey || !Array.isArray(payload)) return;
+  localStorage.setItem(storageKey, JSON.stringify(payload));
+  renderSharedStateScope(scope);
+}
+
+function reportSharedStateError(error) {
+  console.error('SIMU shared state error', error);
+  if (sharedStateWarningShown) return;
+  sharedStateWarningShown = true;
+  notify('No fue posible sincronizar con otros dispositivos. Se conservará una copia local.');
+}
+
+async function writeSharedState(scope, storageKey) {
+  const client = window.simuSupabase;
+  if (!client) return;
+  let payload = [];
+  try { payload = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch {}
+  if (!Array.isArray(payload)) return;
+  const { error } = await client.from(sharedStateTable).upsert({ scope, payload, updated_at: new Date().toISOString() }, { onConflict: 'scope' });
+  if (error) reportSharedStateError(error);
+}
+
+function scheduleSharedStateWrite(scope, storageKey) {
+  window.clearTimeout(sharedStateWriteTimers.get(scope));
+  sharedStateWriteTimers.set(scope, window.setTimeout(() => writeSharedState(scope, storageKey), 120));
+}
+
+async function initializeSharedStateSync() {
+  const client = window.simuSupabase;
+  if (!client) return;
+  const { data, error } = await client.from(sharedStateTable).select('scope,payload');
+  if (error) {
+    reportSharedStateError(error);
+    return;
+  }
+  (data || []).forEach(row => applySharedState(row.scope, row.payload));
+  client.channel('simu-shared-state-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: sharedStateTable }, change => {
+      const row = change.new;
+      if (row?.scope) applySharedState(row.scope, row.payload);
+    })
+    .subscribe(status => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') reportSharedStateError({ status });
+    });
+}
+
 function readInternalAlerts() { try { const value = JSON.parse(localStorage.getItem(alertsStorageKey) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
-function writeInternalAlerts(alerts) { localStorage.setItem(alertsStorageKey, JSON.stringify(alerts)); renderInternalAlerts(); }
+function writeInternalAlerts(alerts) { localStorage.setItem(alertsStorageKey, JSON.stringify(alerts)); scheduleSharedStateWrite('alertas', alertsStorageKey); renderInternalAlerts(); }
 function currentAlertIdentity() {
   if (currentViewId === 'coordinacion') return currentCoordinationOrigin;
   if (currentViewId === 'comandante') return 'Comandante';
@@ -1406,6 +1474,7 @@ function createInternalAlert({ source, audience, type, subject, priority = 'Info
   const alerts = readInternalAlerts();
   alerts.unshift({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, source, audience, type, subject, priority, requirement, reference, createdAt: new Date().toISOString(), acknowledgements: [] });
   localStorage.setItem(alertsStorageKey, JSON.stringify(alerts));
+  scheduleSharedStateWrite('alertas', alertsStorageKey);
   renderInternalAlerts();
 }
 function eligibleAlert(alert) { const identity = currentAlertIdentity(); return alert.audience === identity || (alert.audience === 'Todo el personal' && identity === 'Personal de la Unidad'); }
@@ -1473,5 +1542,6 @@ document.getElementById('alerts-close').addEventListener('click', () => { docume
 document.querySelectorAll('[data-alert-filter]').forEach(button => button.addEventListener('click', () => { activeAlertFilter = button.dataset.alertFilter; document.querySelectorAll('[data-alert-filter]').forEach(item => item.classList.toggle('active', item === button)); renderInternalAlerts(); }));
 new MutationObserver(renderInternalAlerts).observe(document.getElementById('session-user-role'), { childList: true, subtree: true, characterData: true });
 renderInternalAlerts();
+initializeSharedStateSync();
 
 window.addEventListener('afterprint', () => document.body.classList.remove('printing-official-record'));
