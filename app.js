@@ -1542,18 +1542,19 @@ function openAlertDestination(id) {
   if (alert.audience === 'Todo el personal') {
     const publication = readInformationPublications().find(item => item.subject === alert.subject && (!alert.reference || item.reference === alert.reference))
       || readInformationPublications().find(item => item.subject === alert.subject);
-    openInformation('personal');
-    if (publication) window.setTimeout(() => showInformationDetail(publication), 0);
+    if (publication) showInformationDetail(publication);
     else notify('El comunicado fue retirado o ya no se encuentra disponible.');
     return;
   }
-  const identity = currentAlertIdentity();
-  if (coordinationParticipants.includes(identity) && coordinationParticipants.includes(alert.source) && identity !== alert.source) {
-    openCoordinationRoom(identity);
-    openCoordinationChannel(alert.source);
-    return;
-  }
-  notify(`${alert.type}: ${alert.subject}`);
+  const coordination = readList(coordinationKey).find(item => item.origin === alert.source && item.destination === alert.audience && item.subject === alert.subject);
+  showInformationDetail({
+    type: alert.type,
+    subject: alert.subject,
+    reference: alert.reference,
+    date: coordination?.datetime || alert.createdAt,
+    fileName: coordination?.fileName || (alert.reference === 'Sin adjunto' ? '' : alert.reference),
+    content: coordination?.message || 'Información remitida para conocimiento del destinatario.'
+  });
 }
 function renderAlertTracking(alerts) {
   const source = currentAlertIdentity(); const own = alerts.filter(item => item.source === source);
@@ -1566,16 +1567,12 @@ function renderInternalAlerts() {
   const container = document.getElementById('alerts-list');
   if (activeAlertFilter === 'tracking') { container.innerHTML = renderAlertTracking(alerts); return; }
   const visible = activeAlertFilter === 'pending' ? pending : eligible;
-  container.innerHTML = visible.length ? visible.map(alert => { const ack = acknowledgementFor(alert); const needsConformity = alert.requirement === 'conformity'; return `<article class="alert-card priority-${escapeOfficial(alert.priority.toLowerCase())}" data-alert-open="${alert.id}" role="button" tabindex="0" aria-label="Abrir ${escapeOfficial(alert.subject)}"><div class="alert-card-head"><span>${escapeOfficial(alert.priority)}</span><b>${escapeOfficial(alertStatus(alert))}</b></div><h3>${escapeOfficial(alert.subject)}</h3><p>${escapeOfficial(alert.type)} remitido por <strong>${escapeOfficial(alert.source)}</strong></p><small>${escapeOfficial(alert.createdAt)} · ${escapeOfficial(alert.reference || 'Sin adjunto')}</small><div class="alert-card-actions"><button type="button" data-alert-received="${alert.id}"${ack?.receivedAt ? ' disabled' : ''}>Confirmar recibido</button><button type="button" data-alert-view="${alert.id}">Visualizar comunicado</button><button type="button" data-alert-knowledge="${alert.id}"${ack?.knowledgeAt ? ' disabled' : ''}>Tomé conocimiento</button>${needsConformity ? `<button type="button" data-alert-conformity="${alert.id}"${ack?.conformityAt ? ' disabled' : ''}>Doy conformidad</button>` : ''}</div><div class="alert-observation"><input data-alert-note="${alert.id}" placeholder="Escriba una observación"><button type="button" data-alert-observe="${alert.id}">Observar</button></div></article>`; }).join('') : '<p class="alerts-empty">No existen alertas en esta bandeja.</p>';
+  container.innerHTML = visible.length ? visible.map(alert => { const ack = acknowledgementFor(alert); return `<article class="alert-card priority-${escapeOfficial(alert.priority.toLowerCase())}" data-alert-open="${alert.id}" role="button" tabindex="0" aria-label="Abrir ${escapeOfficial(alert.subject)}"><div class="alert-card-head"><span>${escapeOfficial(alert.priority)}</span><b>${escapeOfficial(alertStatus(alert))}</b></div><h3>${escapeOfficial(alert.subject)}</h3><p>${escapeOfficial(alert.type)} remitido por <strong>${escapeOfficial(alert.source)}</strong></p><small>${escapeOfficial(alert.createdAt)} · ${escapeOfficial(alert.reference || 'Sin adjunto')}</small><div class="alert-card-actions single-action"><button type="button" data-alert-knowledge="${alert.id}"${ack?.knowledgeAt ? ' disabled' : ''}>Tomé conocimiento</button></div></article>`; }).join('') : '<p class="alerts-empty">No existen alertas en esta bandeja.</p>';
   container.querySelectorAll('[data-alert-open]').forEach(card => {
-    card.addEventListener('click', event => { if (!event.target.closest('button,input')) openAlertDestination(card.dataset.alertOpen); });
+    card.addEventListener('click', event => { if (!event.target.closest('button')) openAlertDestination(card.dataset.alertOpen); });
     card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openAlertDestination(card.dataset.alertOpen); } });
   });
-  container.querySelectorAll('[data-alert-received]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertReceived, { receivedAt: new Date().toISOString() }); notify('Recepción registrada y visible para el remitente.'); }));
-  container.querySelectorAll('[data-alert-view]').forEach(button => button.addEventListener('click', () => openAlertDestination(button.dataset.alertView)));
   container.querySelectorAll('[data-alert-knowledge]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertKnowledge, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), observedAt: null, note: '' }); notify('Constancia de conocimiento registrada.'); }));
-  container.querySelectorAll('[data-alert-conformity]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertConformity, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), conformityAt: new Date().toISOString(), observedAt: null, note: '' }); notify('Conformidad registrada.'); }));
-  container.querySelectorAll('[data-alert-observe]').forEach(button => button.addEventListener('click', () => { const note = container.querySelector(`[data-alert-note="${button.dataset.alertObserve}"]`).value.trim(); if (!note) return notify('Escriba el motivo de la observación.'); updateAlertAcknowledgement(button.dataset.alertObserve, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), observedAt: new Date().toISOString(), conformityAt: null, note }); notify('Observación registrada.'); }));
   if (currentViewId === 'coordinacion' && !document.getElementById('coordination-directory').hidden) renderCoordinationDirectory();
 }
 document.getElementById('alerts-button').addEventListener('click', () => { const panel = document.getElementById('alerts-panel'); panel.hidden = !panel.hidden; document.getElementById('alerts-button').setAttribute('aria-expanded', String(!panel.hidden)); renderInternalAlerts(); });
