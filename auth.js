@@ -6,6 +6,7 @@
   const passwordInput = document.getElementById('login-password');
   const loginButton = document.getElementById('login-button');
   const forgotButton = document.getElementById('forgot-password-button');
+  const visitorButton = document.getElementById('visitor-login-button');
   const recoveryForm = document.getElementById('recovery-form');
   const newPasswordInput = document.getElementById('new-password');
   const confirmPasswordInput = document.getElementById('confirm-password');
@@ -15,6 +16,7 @@
   const userName = document.getElementById('session-user-name');
   const userRole = document.getElementById('session-user-role');
   const config = window.SIMU_SUPABASE_CONFIG;
+  const visitorSessionKey = 'simu_visitor_session';
 
   const roleLabels = {
     comandante: 'Comandante · Consulta',
@@ -58,6 +60,22 @@
     shell.setAttribute('aria-hidden', String(!active));
   }
 
+  function openVisitorSession() {
+    sessionStorage.setItem(visitorSessionKey, 'active');
+    userName.textContent = 'Usuario visitante';
+    userRole.textContent = 'Visitante · Acceso demostrativo';
+    document.body.dataset.userRole = 'g1';
+    document.body.dataset.accessMode = 'visitor';
+    setAuthenticated(true);
+    setMessage('Acceso de visitante habilitado.', 'success');
+    window.setTimeout(() => {
+      if (typeof window.showView === 'function') window.showView('inicio');
+      else document.querySelector('[data-view="inicio"]')?.click();
+    }, 0);
+  }
+
+  visitorButton.addEventListener('click', openVisitorSession);
+
   if (!config || !config.url || !config.publishableKey || !config.publishableKey.startsWith('sb_publishable_')) {
     setMessage('La configuración pública de Supabase no está disponible.', 'error');
     loginButton.disabled = true;
@@ -95,6 +113,10 @@
 
   async function openSession(session) {
     if (!session?.user) {
+      if (sessionStorage.getItem(visitorSessionKey) === 'active') {
+        openVisitorSession();
+        return;
+      }
       setAuthenticated(false);
       return;
     }
@@ -192,8 +214,10 @@
   });
 
   logoutButton.addEventListener('click', async () => {
+    sessionStorage.removeItem(visitorSessionKey);
     await client.auth.signOut();
     delete document.body.dataset.userRole;
+    delete document.body.dataset.accessMode;
     setAuthenticated(false);
     emailInput.focus();
     setMessage('La sesión se cerró correctamente.');
