@@ -113,13 +113,28 @@ function readInformationPublications() {
   ];
 }
 
+function showInformationDetail(item) {
+  let dialog = document.getElementById('information-detail-dialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'information-detail-dialog';
+    dialog.className = 'information-detail-dialog';
+    document.body.appendChild(dialog);
+  }
+  dialog.innerHTML = `<article><header><div><p class="eyebrow">COMUNICADO PARA CONOCIMIENTO</p><h2>${escapeOfficial(item.subject || 'Sin asunto')}</h2></div><button type="button" data-close-information-detail aria-label="Cerrar">×</button></header><dl><div><dt>Tipo</dt><dd>${escapeOfficial(item.type || 'Comunicado')}</dd></div><div><dt>Referencia</dt><dd>${escapeOfficial(item.reference || 'Sin referencia')}</dd></div><div><dt>Fecha</dt><dd>${escapeOfficial(item.date || 'Sin fecha')}</dd></div><div><dt>Archivo</dt><dd>${escapeOfficial(item.fileName || 'Sin archivo adjunto')}</dd></div></dl><section><h3>Contenido</h3><p>${escapeOfficial(item.content || 'El comunicado no contiene texto adicional.')}</p></section><footer><button class="primary-button" type="button" data-close-information-detail>Cerrar comunicado</button></footer></article>`;
+  dialog.querySelectorAll('[data-close-information-detail]').forEach(button => button.addEventListener('click', () => dialog.close()));
+  dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+}
+
 function renderInformationPublications() {
   const publications = readInformationPublications();
   const container = document.getElementById('information-rows');
   container.innerHTML = publications.length ? publications.map((item, index) => `<article class="information-row"><div><span>${escapeOfficial(item.type)}</span><strong>${escapeOfficial(item.subject)}</strong><small>${escapeOfficial(item.reference)} · ${escapeOfficial(item.date)} · ${escapeOfficial(item.fileName || 'Sin archivo')}</small></div><div class="information-row-actions"><button type="button" data-consult-information="${index}">Consultar</button>${informationAccessMode === 'p1' ? `<button type="button" data-edit-information="${index}">Editar</button><button class="information-delete" type="button" data-delete-information="${index}">Retirar</button>` : ''}</div></article>`).join('') : '<p class="information-empty">No existen disposiciones publicadas.</p>';
   container.querySelectorAll('[data-consult-information]').forEach(button => button.addEventListener('click', () => {
     const item = publications[Number(button.dataset.consultInformation)];
-    notify(`${item.type}: ${item.subject}. ${item.content || 'Sin contenido adicional.'} Adjunto: ${item.fileName || 'sin archivo'}.`);
+    showInformationDetail(item);
   }));
   container.querySelectorAll('[data-delete-information]').forEach(button => button.addEventListener('click', () => {
     publications.splice(Number(button.dataset.deleteInformation), 1);
@@ -1518,6 +1533,28 @@ function updateAlertAcknowledgement(id, updates) {
   Object.assign(ack, updates); writeInternalAlerts(alerts);
 }
 function alertStatus(alert) { const ack = acknowledgementFor(alert); if (!ack) return 'Pendiente'; if (ack.observedAt) return 'Observado'; if (ack.conformityAt) return 'Conforme'; if (ack.knowledgeAt) return 'Conocimiento confirmado'; if (ack.viewedAt) return 'Visualizado'; return 'Recibido'; }
+function openAlertDestination(id) {
+  const alert = readInternalAlerts().find(item => item.id === id);
+  if (!alert) return notify('La alerta ya no se encuentra disponible.');
+  updateAlertAcknowledgement(id, { viewedAt: new Date().toISOString() });
+  document.getElementById('alerts-panel').hidden = true;
+  document.getElementById('alerts-button').setAttribute('aria-expanded', 'false');
+  if (alert.audience === 'Todo el personal') {
+    const publication = readInformationPublications().find(item => item.subject === alert.subject && (!alert.reference || item.reference === alert.reference))
+      || readInformationPublications().find(item => item.subject === alert.subject);
+    openInformation('personal');
+    if (publication) window.setTimeout(() => showInformationDetail(publication), 0);
+    else notify('El comunicado fue retirado o ya no se encuentra disponible.');
+    return;
+  }
+  const identity = currentAlertIdentity();
+  if (coordinationParticipants.includes(identity) && coordinationParticipants.includes(alert.source) && identity !== alert.source) {
+    openCoordinationRoom(identity);
+    openCoordinationChannel(alert.source);
+    return;
+  }
+  notify(`${alert.type}: ${alert.subject}`);
+}
 function renderAlertTracking(alerts) {
   const source = currentAlertIdentity(); const own = alerts.filter(item => item.source === source);
   return own.length ? own.map(alert => `<article class="alert-tracking-card"><div><span>${escapeOfficial(alert.type)} · ${escapeOfficial(alert.audience)}</span><strong>${escapeOfficial(alert.subject)}</strong></div><div class="alert-tracking-table"><span>Destinatario</span><span>Estado</span><span>Fecha y hora</span>${(alert.acknowledgements || []).map(ack => `<b>${escapeOfficial(ack.user)}</b><b>${ack.observedAt ? 'Observado' : ack.conformityAt ? 'Conforme' : ack.knowledgeAt ? 'Conocimiento confirmado' : ack.viewedAt ? 'Visualizado' : 'Recibido'}</b><b>${escapeOfficial(ack.observedAt || ack.conformityAt || ack.knowledgeAt || ack.viewedAt || ack.receivedAt || '')}</b>${ack.note ? `<small>Observación: ${escapeOfficial(ack.note)}</small>` : ''}`).join('') || `<b>${escapeOfficial(alert.audience)}</b><b>Pendiente</b><b>—</b>`}</div></article>`).join('') : '<p class="alerts-empty">No existen publicaciones emitidas para seguimiento desde este nivel.</p>';
@@ -1529,9 +1566,13 @@ function renderInternalAlerts() {
   const container = document.getElementById('alerts-list');
   if (activeAlertFilter === 'tracking') { container.innerHTML = renderAlertTracking(alerts); return; }
   const visible = activeAlertFilter === 'pending' ? pending : eligible;
-  container.innerHTML = visible.length ? visible.map(alert => { const ack = acknowledgementFor(alert); const needsConformity = alert.requirement === 'conformity'; return `<article class="alert-card priority-${escapeOfficial(alert.priority.toLowerCase())}"><div class="alert-card-head"><span>${escapeOfficial(alert.priority)}</span><b>${escapeOfficial(alertStatus(alert))}</b></div><h3>${escapeOfficial(alert.subject)}</h3><p>${escapeOfficial(alert.type)} remitido por <strong>${escapeOfficial(alert.source)}</strong></p><small>${escapeOfficial(alert.createdAt)} · ${escapeOfficial(alert.reference || 'Sin adjunto')}</small><div class="alert-card-actions"><button type="button" data-alert-received="${alert.id}"${ack?.receivedAt ? ' disabled' : ''}>Confirmar recibido</button><button type="button" data-alert-view="${alert.id}">Visualizar</button><button type="button" data-alert-knowledge="${alert.id}"${ack?.knowledgeAt ? ' disabled' : ''}>Tomé conocimiento</button>${needsConformity ? `<button type="button" data-alert-conformity="${alert.id}"${ack?.conformityAt ? ' disabled' : ''}>Doy conformidad</button>` : ''}</div><div class="alert-observation"><input data-alert-note="${alert.id}" placeholder="Escriba una observación"><button type="button" data-alert-observe="${alert.id}">Observar</button></div></article>`; }).join('') : '<p class="alerts-empty">No existen alertas en esta bandeja.</p>';
+  container.innerHTML = visible.length ? visible.map(alert => { const ack = acknowledgementFor(alert); const needsConformity = alert.requirement === 'conformity'; return `<article class="alert-card priority-${escapeOfficial(alert.priority.toLowerCase())}" data-alert-open="${alert.id}" role="button" tabindex="0" aria-label="Abrir ${escapeOfficial(alert.subject)}"><div class="alert-card-head"><span>${escapeOfficial(alert.priority)}</span><b>${escapeOfficial(alertStatus(alert))}</b></div><h3>${escapeOfficial(alert.subject)}</h3><p>${escapeOfficial(alert.type)} remitido por <strong>${escapeOfficial(alert.source)}</strong></p><small>${escapeOfficial(alert.createdAt)} · ${escapeOfficial(alert.reference || 'Sin adjunto')}</small><div class="alert-card-actions"><button type="button" data-alert-received="${alert.id}"${ack?.receivedAt ? ' disabled' : ''}>Confirmar recibido</button><button type="button" data-alert-view="${alert.id}">Visualizar comunicado</button><button type="button" data-alert-knowledge="${alert.id}"${ack?.knowledgeAt ? ' disabled' : ''}>Tomé conocimiento</button>${needsConformity ? `<button type="button" data-alert-conformity="${alert.id}"${ack?.conformityAt ? ' disabled' : ''}>Doy conformidad</button>` : ''}</div><div class="alert-observation"><input data-alert-note="${alert.id}" placeholder="Escriba una observación"><button type="button" data-alert-observe="${alert.id}">Observar</button></div></article>`; }).join('') : '<p class="alerts-empty">No existen alertas en esta bandeja.</p>';
+  container.querySelectorAll('[data-alert-open]').forEach(card => {
+    card.addEventListener('click', event => { if (!event.target.closest('button,input')) openAlertDestination(card.dataset.alertOpen); });
+    card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openAlertDestination(card.dataset.alertOpen); } });
+  });
   container.querySelectorAll('[data-alert-received]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertReceived, { receivedAt: new Date().toISOString() }); notify('Recepción registrada y visible para el remitente.'); }));
-  container.querySelectorAll('[data-alert-view]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertView, { viewedAt: new Date().toISOString() }); notify('Información visualizada.'); }));
+  container.querySelectorAll('[data-alert-view]').forEach(button => button.addEventListener('click', () => openAlertDestination(button.dataset.alertView)));
   container.querySelectorAll('[data-alert-knowledge]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertKnowledge, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), observedAt: null, note: '' }); notify('Constancia de conocimiento registrada.'); }));
   container.querySelectorAll('[data-alert-conformity]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertConformity, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), conformityAt: new Date().toISOString(), observedAt: null, note: '' }); notify('Conformidad registrada.'); }));
   container.querySelectorAll('[data-alert-observe]').forEach(button => button.addEventListener('click', () => { const note = container.querySelector(`[data-alert-note="${button.dataset.alertObserve}"]`).value.trim(); if (!note) return notify('Escriba el motivo de la observación.'); updateAlertAcknowledgement(button.dataset.alertObserve, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), observedAt: new Date().toISOString(), conformityAt: null, note }); notify('Observación registrada.'); }));
