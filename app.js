@@ -35,6 +35,7 @@ function showView(id, options = {}) {
   };
   title.textContent = pageTitles[id] || pageTitles.inicio;
   viewBackButton.hidden = id === 'inicio' || viewHistory.length === 0;
+  if (typeof renderInternalAlerts === 'function') renderInternalAlerts();
 }
 
 function goBackView(fallback = 'inicio') {
@@ -1409,6 +1410,38 @@ function createInternalAlert({ source, audience, type, subject, priority = 'Info
 }
 function eligibleAlert(alert) { const identity = currentAlertIdentity(); return alert.audience === identity || (alert.audience === 'Todo el personal' && identity === 'Personal de la Unidad'); }
 function acknowledgementFor(alert) { const user = alertUserLabel(); return (alert.acknowledgements || []).find(item => item.user === user); }
+function acknowledgementForIdentity(alert, identity) {
+  return (alert.acknowledgements || []).find(item => item.user === identity || item.user.endsWith(` · ${identity}`));
+}
+function renderModuleAlertIndicators(alerts) {
+  document.querySelectorAll('.module-alert-indicator').forEach(indicator => indicator.remove());
+  const moduleTargets = [
+    { identity: 'Comandante', selectors: '#inicio [data-open-commander]' },
+    { identity: 'Jefe de la Plana Mayor', selectors: '#inicio [data-open-jpm]' },
+    { identity: 'P-1 Personal', selectors: '#inicio [data-open-p1]' },
+    { identity: 'P-2 Inteligencia', selectors: '#inicio [data-open-coordination][data-coordination-origin="P-2 Inteligencia"]' },
+    { identity: 'P-3 Operaciones', selectors: '#inicio [data-open-coordination][data-coordination-origin="P-3 Operaciones"]' },
+    { identity: 'P-4 Logística', selectors: '#inicio [data-open-coordination][data-coordination-origin="P-4 Logística"]' },
+    { identity: 'P-5 Asuntos Civiles', selectors: '#inicio [data-open-coordination][data-coordination-origin="P-5 Asuntos Civiles"]' },
+    { identity: 'Personal de la Unidad', selectors: '#inicio [data-open-portal]', audience: 'Todo el personal' }
+  ];
+  moduleTargets.forEach(({ identity, selectors, audience = identity }) => {
+    const pending = alerts.filter(alert => alert.audience === audience && !acknowledgementForIdentity(alert, identity)?.knowledgeAt).length;
+    if (!pending) return;
+    document.querySelectorAll(selectors).forEach(target => {
+      const indicator = document.createElement('span');
+      indicator.className = 'module-alert-indicator';
+      indicator.setAttribute('aria-label', `${pending} alerta${pending === 1 ? '' : 's'} pendiente${pending === 1 ? '' : 's'}`);
+      indicator.title = indicator.getAttribute('aria-label');
+      indicator.innerHTML = `<i aria-hidden="true"></i><b>${pending}</b>`;
+      target.appendChild(indicator);
+      target.classList.add('has-module-alert');
+    });
+  });
+  document.querySelectorAll('.has-module-alert').forEach(target => {
+    if (!target.querySelector('.module-alert-indicator')) target.classList.remove('has-module-alert');
+  });
+}
 function updateAlertAcknowledgement(id, updates) {
   const alerts = readInternalAlerts(); const alert = alerts.find(item => item.id === id); if (!alert) return;
   alert.acknowledgements ||= []; const user = alertUserLabel(); let ack = alert.acknowledgements.find(item => item.user === user);
@@ -1423,6 +1456,7 @@ function renderAlertTracking(alerts) {
 function renderInternalAlerts() {
   const alerts = readInternalAlerts(); const eligible = alerts.filter(eligibleAlert); const pending = eligible.filter(alert => !acknowledgementFor(alert)?.knowledgeAt);
   setText('alerts-count', String(pending.length)); document.getElementById('alerts-button').classList.toggle('has-alerts', pending.length > 0);
+  renderModuleAlertIndicators(alerts);
   const container = document.getElementById('alerts-list');
   if (activeAlertFilter === 'tracking') { container.innerHTML = renderAlertTracking(alerts); return; }
   const visible = activeAlertFilter === 'pending' ? pending : eligible;
