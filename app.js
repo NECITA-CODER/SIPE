@@ -108,8 +108,8 @@ function readInformationPublications() {
     if (Array.isArray(stored)) return stored;
   } catch {}
   return [
-    { type: 'Radiograma', subject: 'Disposición administrativa semanal', reference: 'RAD. DEMO. N.º 01/26', date: '2026-08-19', content: 'Información demostrativa para conocimiento del personal.', fileName: 'Documento demostrativo.pdf' },
-    { type: 'Comunicado', subject: 'Actividad general de la Unidad', reference: 'COM. DEMO. N.º 02/26', date: '2026-08-18', content: 'Comunicado demostrativo publicado sin archivo obligatorio.', fileName: '' }
+    { type: 'Radiograma', subject: 'Disposición administrativa semanal', date: '2026-08-19', content: 'Información demostrativa para conocimiento del personal.', fileName: 'Documento demostrativo.pdf' },
+    { type: 'Comunicado', subject: 'Actividad general de la Unidad', date: '2026-08-18', content: 'Comunicado demostrativo publicado sin archivo obligatorio.', fileName: '' }
   ];
 }
 
@@ -121,7 +121,7 @@ function showInformationDetail(item) {
     dialog.className = 'information-detail-dialog';
     document.body.appendChild(dialog);
   }
-  dialog.innerHTML = `<article><header><div><p class="eyebrow">COMUNICADO PARA CONOCIMIENTO</p><h2>${escapeOfficial(item.subject || 'Sin asunto')}</h2></div><button type="button" data-close-information-detail aria-label="Cerrar">×</button></header><dl><div><dt>Tipo</dt><dd>${escapeOfficial(item.type || 'Comunicado')}</dd></div><div><dt>Referencia</dt><dd>${escapeOfficial(item.reference || 'Sin referencia')}</dd></div><div><dt>Fecha</dt><dd>${escapeOfficial(item.date || 'Sin fecha')}</dd></div><div><dt>Archivo</dt><dd>${escapeOfficial(item.fileName || 'Sin archivo adjunto')}</dd></div></dl><section><h3>Contenido</h3><p>${escapeOfficial(item.content || 'El comunicado no contiene texto adicional.')}</p></section><footer><button class="primary-button" type="button" data-close-information-detail>Cerrar comunicado</button></footer></article>`;
+  dialog.innerHTML = `<article><header><div><p class="eyebrow">COMUNICADO PARA CONOCIMIENTO</p><h2>${escapeOfficial(item.subject || 'Sin asunto')}</h2></div><button type="button" data-close-information-detail aria-label="Cerrar">×</button></header><dl><div><dt>Tipo</dt><dd>${escapeOfficial(item.type || 'Comunicado')}</dd></div><div><dt>Fecha</dt><dd>${escapeOfficial(item.date || 'Sin fecha')}</dd></div><div><dt>Archivo</dt><dd>${escapeOfficial(item.fileName || 'Sin archivo adjunto')}</dd></div></dl><section><h3>Contenido</h3><p>${escapeOfficial(item.content || 'El comunicado no contiene texto adicional.')}</p></section><footer><button class="primary-button" type="button" data-close-information-detail>Cerrar comunicado</button></footer></article>`;
   dialog.querySelectorAll('[data-close-information-detail]').forEach(button => button.addEventListener('click', () => dialog.close()));
   dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
   if (typeof dialog.showModal === 'function') dialog.showModal();
@@ -131,7 +131,7 @@ function showInformationDetail(item) {
 function renderInformationPublications() {
   const publications = readInformationPublications();
   const container = document.getElementById('information-rows');
-  container.innerHTML = publications.length ? publications.map((item, index) => `<article class="information-row"><div><span>${escapeOfficial(item.type)}</span><strong>${escapeOfficial(item.subject)}</strong><small>${escapeOfficial(item.reference)} · ${escapeOfficial(item.date)} · ${escapeOfficial(item.fileName || 'Sin archivo')}</small></div><div class="information-row-actions"><button type="button" data-consult-information="${index}">Consultar</button>${informationAccessMode === 'p1' ? `<button type="button" data-edit-information="${index}">Editar</button><button class="information-delete" type="button" data-delete-information="${index}">Retirar</button>` : ''}</div></article>`).join('') : '<p class="information-empty">No existen disposiciones publicadas.</p>';
+  container.innerHTML = publications.length ? publications.map((item, index) => `<article class="information-row"><div><span>${escapeOfficial(item.type)}</span><strong>${escapeOfficial(item.subject)}</strong><small>${escapeOfficial(item.date)} · ${escapeOfficial(item.fileName || 'Sin archivo')}</small></div><div class="information-row-actions"><button type="button" data-consult-information="${index}">Consultar</button>${informationAccessMode === 'p1' ? `<button type="button" data-edit-information="${index}">Editar</button><button class="information-delete" type="button" data-delete-information="${index}">Retirar</button>` : ''}</div></article>`).join('') : '<p class="information-empty">No existen disposiciones publicadas.</p>';
   container.querySelectorAll('[data-consult-information]').forEach(button => button.addEventListener('click', () => {
     const item = publications[Number(button.dataset.consultInformation)];
     showInformationDetail(item);
@@ -149,7 +149,6 @@ function renderInformationPublications() {
     document.getElementById('information-type').value = item.type;
     document.getElementById('information-requirement').value = item.requirement || 'knowledge';
     document.getElementById('information-subject').value = item.subject;
-    document.getElementById('information-reference').value = item.reference;
     document.getElementById('information-date').value = item.date;
     document.getElementById('information-content').value = item.content || '';
     document.getElementById('information-file').value = '';
@@ -183,7 +182,7 @@ generalInformationForm.addEventListener('submit', event => {
     type: document.getElementById('information-type').value,
     requirement: document.getElementById('information-requirement').value,
     subject: document.getElementById('information-subject').value.trim(),
-    reference: document.getElementById('information-reference').value.trim(),
+    reference: '',
     date: document.getElementById('information-date').value,
     content: document.getElementById('information-content').value.trim(),
     fileName: file?.name || previous?.fileName || ''
@@ -193,7 +192,7 @@ generalInformationForm.addEventListener('submit', event => {
   localStorage.setItem(informationStorageKey, JSON.stringify(publications));
   scheduleSharedStateWrite('publicaciones', informationStorageKey);
   const wasEditing = editingInformationIndex !== null;
-  if (!wasEditing) createInternalAlert({ source: 'P-1 Personal', audience: 'Todo el personal', type: publication.type, subject: publication.subject, priority: 'Informativa', requirement: publication.requirement, reference: publication.reference });
+  if (!wasEditing) createInternalAlert({ source: 'P-1 Personal', audience: 'Todo el personal', type: publication.type, subject: publication.subject, priority: 'Informativa', requirement: publication.requirement, reference: publication.reference, content: publication.content });
   resetInformationForm();
   renderInformationPublications();
   notify(wasEditing ? 'La disposición fue actualizada.' : 'Disposición publicada en el Portal del Personal.');
@@ -1393,7 +1392,7 @@ function renderCoordinationHistory() {
 }
 function renderCoordinationHistoryLegacy() { const rows = readList(coordinationKey); setText('coordination-count', `${rows.length} registros`); document.getElementById('coordination-history').innerHTML = rows.length ? rows.map((item, index) => `<article class="coordination-thread"><div><span>${escapeOfficial(item.origin)} → ${escapeOfficial(item.destination)}</span><strong>${escapeOfficial(item.subject)}</strong><p>${escapeOfficial(item.message)}</p>${item.response ? `<p><b>Respuesta:</b> ${escapeOfficial(item.response)}</p>` : ''}<small>${escapeOfficial(item.datetime)} · ${escapeOfficial(item.priority)} · ${escapeOfficial(item.fileName || 'Sin adjunto')}</small></div><div class="coordination-controls"><label>Estado<select data-coord-status="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}><option${item.status === 'Pendiente' ? ' selected' : ''}>Pendiente</option><option${item.status === 'Recibida' ? ' selected' : ''}>Recibida</option><option${item.status === 'Respondida' ? ' selected' : ''}>Respondida</option><option${item.status === 'Cerrada' ? ' selected' : ''}>Cerrada</option></select></label><label>Respuesta<textarea data-coord-response="${index}" rows="2"${item.status === 'Cerrada' ? ' disabled' : ''}>${escapeOfficial(item.response || '')}</textarea></label><button type="button" data-coord-save="${index}"${item.status === 'Cerrada' ? ' disabled' : ''}>Guardar respuesta</button></div></article>`).join('') : '<p>No existen coordinaciones registradas.</p>'; document.querySelectorAll('[data-coord-status]').forEach(select => select.addEventListener('change', () => { const rows = readList(coordinationKey); rows[Number(select.dataset.coordStatus)].status = select.value; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); })); document.querySelectorAll('[data-coord-save]').forEach(button => button.addEventListener('click', () => { const rows = readList(coordinationKey); const index = Number(button.dataset.coordSave); rows[index].response = document.querySelector(`[data-coord-response="${index}"]`).value.trim(); if (rows[index].response) rows[index].status = 'Respondida'; localStorage.setItem(coordinationKey, JSON.stringify(rows)); renderCoordinationHistory(); notify('Respuesta registrada.'); })); }
 document.getElementById('coord-destination').addEventListener('change', event => { currentCoordinationDestination = event.target.value; setText('coordination-channel-title', `${currentCoordinationOrigin} ↔ ${currentCoordinationDestination}`); renderCoordinationHistory(); });
-document.getElementById('coordination-form').addEventListener('submit', event => { event.preventDefault(); const origin = document.getElementById('coord-origin').value; const destination = document.getElementById('coord-destination').value; if (origin === destination) return notify('Seleccione un destinatario diferente al origen.'); const file = document.getElementById('coord-file').files[0]; const priority = document.getElementById('coord-priority').value; const subject = document.getElementById('coord-subject').value; const requirement = document.getElementById('coord-requirement').value; const documentType = document.getElementById('coord-document-type').value; const datetime = document.getElementById('coord-datetime').value; const message = document.getElementById('coord-message').value; const targets = destination === coordinationAllStaff ? coordinationParticipants.filter(item => item !== origin) : [destination]; const rows = readList(coordinationKey); targets.slice().reverse().forEach(target => { rows.unshift({ origin, destination: target, priority, subject, requirement, documentType, datetime, message, fileName: file?.name || '', status: 'Pendiente' }); createInternalAlert({ source: origin, audience: target, type: documentType, subject, priority, requirement, reference: file?.name || 'Sin adjunto' }); }); localStorage.setItem(coordinationKey, JSON.stringify(rows)); scheduleSharedStateWrite('coordinaciones', coordinationKey); event.target.reset(); document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16); openCoordinationChannel(destination); notify(destination === coordinationAllStaff ? 'Coordinación registrada y alertas enviadas a toda la Plana Mayor.' : 'Coordinación registrada y alerta enviada al destinatario.'); });
+document.getElementById('coordination-form').addEventListener('submit', event => { event.preventDefault(); const origin = document.getElementById('coord-origin').value; const destination = document.getElementById('coord-destination').value; if (origin === destination) return notify('Seleccione un destinatario diferente al origen.'); const file = document.getElementById('coord-file').files[0]; const priority = document.getElementById('coord-priority').value; const subject = document.getElementById('coord-subject').value; const requirement = document.getElementById('coord-requirement').value; const documentType = document.getElementById('coord-document-type').value; const datetime = document.getElementById('coord-datetime').value; const message = document.getElementById('coord-message').value; const targets = destination === coordinationAllStaff ? coordinationParticipants.filter(item => item !== origin) : [destination]; const rows = readList(coordinationKey); targets.slice().reverse().forEach(target => { rows.unshift({ origin, destination: target, priority, subject, requirement, documentType, datetime, message, fileName: file?.name || '', status: 'Pendiente' }); createInternalAlert({ source: origin, audience: target, type: documentType, subject, priority, requirement, reference: file?.name || 'Sin adjunto', content: message }); }); localStorage.setItem(coordinationKey, JSON.stringify(rows)); scheduleSharedStateWrite('coordinaciones', coordinationKey); event.target.reset(); document.getElementById('coord-datetime').value = new Date().toISOString().slice(0, 16); openCoordinationChannel(destination); notify(destination === coordinationAllStaff ? 'Coordinación registrada y alertas enviadas a toda la Plana Mayor.' : 'Coordinación registrada y alerta enviada al destinatario.'); });
 document.getElementById('meeting-create').addEventListener('click', () => { if (!canConveneMeeting()) return notify('Solo el Comandante o el Jefe de la Plana Mayor puede convocar la reunión general.'); const subject = document.getElementById('meeting-subject').value.trim(); const link = document.getElementById('meeting-link').value.trim(); if (!subject || !/^https:\/\/meet\.google\.com\//i.test(link)) return notify('Ingrese el asunto y un enlace válido de Google Meet.'); coordinationParticipants.filter(item => item !== currentCoordinationOrigin).forEach(audience => createInternalAlert({ source: currentCoordinationOrigin, audience, type: 'Reunión general', subject, priority: 'Inmediata', requirement: 'knowledge', reference: link })); notify('Reunión general registrada y alertas enviadas a los participantes.'); window.open(link, '_blank', 'noopener'); });
 renderCoordinationHistory();
 
@@ -1485,9 +1484,9 @@ function currentAlertIdentity() {
   return 'Personal de la Unidad';
 }
 function alertUserLabel() { const name = document.getElementById('session-user-name')?.textContent?.trim(); return name && name !== 'Usuario autorizado' ? `${name} · ${currentAlertIdentity()}` : currentAlertIdentity(); }
-function createInternalAlert({ source, audience, type, subject, priority = 'Informativa', requirement = 'knowledge', reference = '' }) {
+function createInternalAlert({ source, audience, type, subject, priority = 'Informativa', requirement = 'knowledge', reference = '', content = '' }) {
   const alerts = readInternalAlerts();
-  alerts.unshift({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, source, audience, type, subject, priority, requirement, reference, createdAt: new Date().toISOString(), acknowledgements: [] });
+  alerts.unshift({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, source, audience, type, subject, priority, requirement, reference, content, createdAt: new Date().toISOString(), acknowledgements: [] });
   localStorage.setItem(alertsStorageKey, JSON.stringify(alerts));
   scheduleSharedStateWrite('alertas', alertsStorageKey);
   renderInternalAlerts();
@@ -1533,6 +1532,21 @@ function updateAlertAcknowledgement(id, updates) {
   Object.assign(ack, updates); writeInternalAlerts(alerts);
 }
 function alertStatus(alert) { const ack = acknowledgementFor(alert); if (!ack) return 'Pendiente'; if (ack.observedAt) return 'Observado'; if (ack.conformityAt) return 'Conforme'; if (ack.knowledgeAt) return 'Conocimiento confirmado'; if (ack.viewedAt) return 'Visualizado'; return 'Recibido'; }
+function sameAlertText(left, right) { return String(left || '').trim().toLocaleLowerCase('es') === String(right || '').trim().toLocaleLowerCase('es'); }
+function alertDisplayContent(alert) {
+  if (String(alert.content || '').trim()) return alert.content;
+  if (alert.audience === 'Todo el personal') {
+    const publications = readInformationPublications();
+    const publication = publications.find(item => sameAlertText(item.subject, alert.subject) && (!alert.reference || item.reference === alert.reference))
+      || publications.find(item => sameAlertText(item.subject, alert.subject));
+    return publication?.content || '';
+  }
+  const coordinations = readList(coordinationKey);
+  const coordination = coordinations.find(item => sameAlertText(item.origin, alert.source) && sameAlertText(item.destination, alert.audience) && sameAlertText(item.subject, alert.subject))
+    || coordinations.find(item => sameAlertText(item.origin, alert.source) && sameAlertText(item.subject, alert.subject))
+    || coordinations.find(item => sameAlertText(item.subject, alert.subject));
+  return coordination?.message || '';
+}
 function openAlertDestination(id) {
   const alert = readInternalAlerts().find(item => item.id === id);
   if (!alert) return notify('La alerta ya no se encuentra disponible.');
@@ -1553,7 +1567,7 @@ function openAlertDestination(id) {
     reference: alert.reference,
     date: coordination?.datetime || alert.createdAt,
     fileName: coordination?.fileName || (alert.reference === 'Sin adjunto' ? '' : alert.reference),
-    content: coordination?.message || 'Información remitida para conocimiento del destinatario.'
+    content: alertDisplayContent(alert) || 'Información remitida para conocimiento del destinatario.'
   });
 }
 function renderAlertTracking(alerts) {
@@ -1567,11 +1581,7 @@ function renderInternalAlerts() {
   const container = document.getElementById('alerts-list');
   if (activeAlertFilter === 'tracking') { container.innerHTML = renderAlertTracking(alerts); return; }
   const visible = activeAlertFilter === 'pending' ? pending : eligible;
-  container.innerHTML = visible.length ? visible.map(alert => { const ack = acknowledgementFor(alert); return `<article class="alert-card priority-${escapeOfficial(alert.priority.toLowerCase())}" data-alert-open="${alert.id}" role="button" tabindex="0" aria-label="Abrir ${escapeOfficial(alert.subject)}"><div class="alert-card-head"><span>${escapeOfficial(alert.priority)}</span><b>${escapeOfficial(alertStatus(alert))}</b></div><h3>${escapeOfficial(alert.subject)}</h3><p>${escapeOfficial(alert.type)} remitido por <strong>${escapeOfficial(alert.source)}</strong></p><small>${escapeOfficial(alert.createdAt)} · ${escapeOfficial(alert.reference || 'Sin adjunto')}</small><div class="alert-card-actions single-action"><button type="button" data-alert-knowledge="${alert.id}"${ack?.knowledgeAt ? ' disabled' : ''}>Tomé conocimiento</button></div></article>`; }).join('') : '<p class="alerts-empty">No existen alertas en esta bandeja.</p>';
-  container.querySelectorAll('[data-alert-open]').forEach(card => {
-    card.addEventListener('click', event => { if (!event.target.closest('button')) openAlertDestination(card.dataset.alertOpen); });
-    card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openAlertDestination(card.dataset.alertOpen); } });
-  });
+  container.innerHTML = visible.length ? visible.map(alert => { const ack = acknowledgementFor(alert); const content = alertDisplayContent(alert); return `<article class="alert-card priority-${escapeOfficial(alert.priority.toLowerCase())}"><div class="alert-card-head"><span>${escapeOfficial(alert.priority)}</span><b>${escapeOfficial(alertStatus(alert))}</b></div><h3>${escapeOfficial(alert.subject)}</h3><p>${escapeOfficial(alert.type)} remitido por <strong>${escapeOfficial(alert.source)}</strong></p><div class="alert-message-content"><span>Contenido del comunicado</span><p>${escapeOfficial(content || 'Información remitida para conocimiento del destinatario.')}</p></div><small>${escapeOfficial(alert.createdAt)} · ${escapeOfficial(alert.reference || 'Sin adjunto')}</small><div class="alert-card-actions single-action"><button type="button" data-alert-knowledge="${alert.id}"${ack?.knowledgeAt ? ' disabled' : ''}>Tomé conocimiento</button></div></article>`; }).join('') : '<p class="alerts-empty">No existen alertas en esta bandeja.</p>';
   container.querySelectorAll('[data-alert-knowledge]').forEach(button => button.addEventListener('click', () => { updateAlertAcknowledgement(button.dataset.alertKnowledge, { viewedAt: new Date().toISOString(), knowledgeAt: new Date().toISOString(), observedAt: null, note: '' }); notify('Constancia de conocimiento registrada.'); }));
   if (currentViewId === 'coordinacion' && !document.getElementById('coordination-directory').hidden) renderCoordinationDirectory();
 }
